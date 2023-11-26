@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::cell::Cell;
+use crate::cell::{Cell, Direction};
 
 pub struct Grid {
 	contents: Vec<Cell>,
@@ -87,17 +87,20 @@ impl Grid {
 
 
 
-	pub fn insert(&mut self, other: &Grid, pos: [isize; 2]) {
+	pub fn insert(&mut self, other: &Grid, pos: [isize; 2], other_dir: Direction) {
 
 		let top =    self.height - self.shift[1] - 1;
 		let right =  self.width  - self.shift[0] - 1;
 		let bottom = self.shift[1];
 		let left =   self.shift[0];
 
-		let other_top =    other.height - other.shift[1] - 1;
-		let other_right =  other.width  - other.shift[0] - 1;
-		let other_bottom = other.shift[1];
-		let other_left =   other.shift[0];
+		let mut other_top =    other.height - other.shift[1] - 1;
+		let mut other_right =  other.width  - other.shift[0] - 1;
+		let mut other_bottom = other.shift[1];
+		let mut other_left =   other.shift[0];
+
+		[other_top, other_left, other_bottom, other_right] = 
+			other_dir.rotate_vals(other_top, other_left, other_bottom, other_right);
 
 		let expand_top =   isize::max(0,  pos[1] + other_top as isize    - top as isize   ) as usize;
 		let expand_right = isize::max(0,  pos[0] + other_right as isize  - right as isize ) as usize;
@@ -133,8 +136,9 @@ impl Grid {
 			match cell {
 				Cell::Empty => {},
 				cell => {
+					let [x, y] = other_dir.rotate_coords(x, y);
 					let i = self.pos_to_index([x + pos[0], y + pos[1]]);
-					self.contents[i] = cell;
+					self.contents[i] = other_dir.rotate_cell(cell);
 				},
 			}
 		}
@@ -196,25 +200,21 @@ impl Display for Grid {
 		for i in 0..self.width {
 			write!(f, "{0}{0}", if i == self.shift[0] {'\u{253C}'} else {'\u{2500}'})?;
 		}
-		write!(f, "{}", '\u{2510}')?;
+		writeln!(f, "{}", '\u{2510}')?;
 		
 
-		write!(f, "\n{}", if 0 == self.shift[1] {'\u{253C}'} else {'\u{2502}'})?;
+		for y in (0..self.height).rev() {
+			write!(f, "{}", if y == self.shift[1] {'\u{256A}'} else {'\u{2502}'})?;
+			for x in 0..self.width {
+				let cell = self.at_raw([x, y]);
 
-        for (i, cell) in self.contents.iter().enumerate() {
-			match cell {
-				Cell::Stem(n) => write!(f, "{n}{n}")?,
-				Cell::Passive => write!(f, "{0}{0}", '\u{2588}')?,
-				Cell::Empty => write!(f, "  ")?,
-			};
-
-			if (i + 1) % (self.width) == 0 {
-				writeln!(f, "{}", if i / self.width == self.shift[1] {'\u{256A}'} else {'\u{2502}'})?;
-				
-				if i != self.contents.len() - 1 {
-					write!(f, "{}", if (i+1) / self.width == self.shift[1] {'\u{256A}'} else {'\u{2502}'})?;
-				}
+				match cell {
+					Cell::Stem(n, d) => write!(f, "{n}{d}")?,
+					Cell::Passive => write!(f, "{0}{0}", '\u{2588}')?,
+					Cell::Empty => write!(f, "  ")?,
+				};
 			}
+			writeln!(f, "{}", if y == self.shift[1] {'\u{256A}'} else {'\u{2502}'})?;
 		}
 		
 		write!(f, "{}", '\u{2514}')?;
