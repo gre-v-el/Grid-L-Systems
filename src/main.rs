@@ -27,9 +27,8 @@ fn main() {
 		],
 	);
 
-	for _ in 0..15 {
-		println!("{}", system.state());
-		println!("{:?}\n", system.queue());
+	for _ in 0..34 {
+		println!("{}\n", system.state());
 		system.try_step();
 	}
 	println!("{}", system.state());

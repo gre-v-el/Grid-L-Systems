@@ -194,7 +194,7 @@ impl Display for Grid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		write!(f, "{}", '\u{250C}')?;
 		for i in 0..self.width {
-			write!(f, "{}", if i == self.shift[0] {'\u{253C}'} else {'\u{2500}'})?;
+			write!(f, "{0}{0}", if i == self.shift[0] {'\u{253C}'} else {'\u{2500}'})?;
 		}
 		write!(f, "{}", '\u{2510}')?;
 		
@@ -203,23 +203,23 @@ impl Display for Grid {
 
         for (i, cell) in self.contents.iter().enumerate() {
 			match cell {
-				Cell::Stem(n) => write!(f, "{n}")?,
-				Cell::Passive => write!(f, "{}", '\u{2588}')?,
-				Cell::Empty => write!(f, " ")?,
+				Cell::Stem(n) => write!(f, "{n}{n}")?,
+				Cell::Passive => write!(f, "{0}{0}", '\u{2588}')?,
+				Cell::Empty => write!(f, "  ")?,
 			};
 
 			if (i + 1) % (self.width) == 0 {
-				writeln!(f, "{}", if i / self.width == self.shift[1] {'\u{253C}'} else {'\u{2502}'})?;
+				writeln!(f, "{}", if i / self.width == self.shift[1] {'\u{256A}'} else {'\u{2502}'})?;
 				
 				if i != self.contents.len() - 1 {
-					write!(f, "{}", if (i+1) / self.width == self.shift[1] {'\u{253C}'} else {'\u{2502}'})?;
+					write!(f, "{}", if (i+1) / self.width == self.shift[1] {'\u{256A}'} else {'\u{2502}'})?;
 				}
 			}
 		}
 		
 		write!(f, "{}", '\u{2514}')?;
 		for i in 0..self.width {
-			write!(f, "{}", if i == self.shift[0] {'\u{253C}'} else {'\u{2500}'})?;
+			write!(f, "{0}{0}", if i == self.shift[0] {'\u{253C}'} else {'\u{2500}'})?;
 		}
 		write!(f, "{}", '\u{2518}')?;
 

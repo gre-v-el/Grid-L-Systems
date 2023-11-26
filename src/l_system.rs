@@ -68,8 +68,4 @@ impl<const N: usize> LSystem<N> {
 	pub fn state(&self) -> &Grid {
 		&self.state
 	}
-
-	pub fn queue(&self) -> &VecDeque<[isize; 2]> {
-		&self.stem_queue
-	}
 }
