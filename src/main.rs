@@ -24,8 +24,8 @@ fn main() {
 				],
 				[0, 0]
 			),
-			Grid::vertical  (&[Stem(2, Direction::RIGHT), Passive, Passive], 2),
-			Grid::vertical  (&[Stem(1, Direction::LEFT), Passive, Passive], 2),
+			Grid::vertical(&[Passive, Passive, Stem(2, Direction::LEFT)], 0),
+			Grid::vertical(&[Passive, Passive, Stem(1, Direction::RIGHT)], 0),
 		],
 	);
 
