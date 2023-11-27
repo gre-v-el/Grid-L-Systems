@@ -1,5 +1,9 @@
+pub mod cell;
+pub mod grid;
+
 use std::collections::VecDeque;
-use crate::{grid::Grid, cell::Cell};
+use grid::Grid;
+use cell::Cell;
 
 pub struct LSystem {
 	state: Grid,
@@ -62,7 +66,7 @@ impl LSystem {
 		&self.state
 	}
 
-	pub fn queue(&self) -> &VecDeque<[isize; 2]> {
-		&self.stem_queue
-	}
+	// pub fn queue(&self) -> &VecDeque<[isize; 2]> {
+	// 	&self.stem_queue
+	// }
 }

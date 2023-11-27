@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::cell::{Cell, Direction};
+use crate::l_system::cell::{Cell, Direction};
 
 pub struct Grid {
 	contents: Vec<Cell>,
@@ -62,9 +62,9 @@ impl Grid {
 		[(pos[0] + self.shift[0] as isize) as usize, (pos[1] + self.shift[1] as isize) as usize]
 	}
 
-	fn raw_pos_to_pos(&self, raw_pos: [usize; 2]) -> [isize; 2] {
-		[raw_pos[0] as isize - self.shift[0] as isize, raw_pos[1] as isize - self.shift[1] as isize]
-	}
+	// fn raw_pos_to_pos(&self, raw_pos: [usize; 2]) -> [isize; 2] {
+	// 	[raw_pos[0] as isize - self.shift[0] as isize, raw_pos[1] as isize - self.shift[1] as isize]
+	// }
 
 	pub fn at(&self, pos: [isize; 2]) -> Cell {
 		self.contents[self.pos_to_index(pos)]

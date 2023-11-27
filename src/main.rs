@@ -1,19 +1,16 @@
-mod grid;
 mod l_system;
-mod cell;
 
 use std::env;
 
-use grid::Grid;
+use l_system::grid::Grid;
 use l_system::LSystem;
-
-use crate::cell::Direction;
+use l_system::cell::Direction;
 
 
 fn main() {
 	env::set_var("RUST_BACKTRACE", "1");
 	
-	use cell::Cell as C;
+	use l_system::cell::Cell as C;
     let mut system = LSystem::new(
 		Grid::single(C::Stem(0, Direction::UP)),
 		vec![

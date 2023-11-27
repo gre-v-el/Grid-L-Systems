@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "grid_l_systems"
+name = "soft_evolution"
 version = "0.1.0"
