@@ -1,15 +1,14 @@
 use std::collections::VecDeque;
-
 use crate::{grid::Grid, cell::Cell};
 
-pub struct LSystem<const N: usize> {
+pub struct LSystem {
 	state: Grid,
-	rules: [Grid; N],
+	rules: Vec<Grid>,
 	stem_queue: VecDeque<[isize; 2]>,
 }
 
-impl<const N: usize> LSystem<N> {
-	pub fn new(state: Grid, rules: [Grid; N]) -> Self {
+impl LSystem {
+	pub fn new(state: Grid, rules: Vec<Grid>) -> Self {
 		let mut stem_queue = VecDeque::new();
 		
 		for ([x, y], cell) in &state {
@@ -37,7 +36,10 @@ impl<const N: usize> LSystem<N> {
 			self.state.insert(to, pos, stem_dir);
 
 			self.stem_queue.retain(|e| {
-				!to.contains(self.state.pos_to_other_pos(*e, pos))
+				match self.state.at(*e) {
+					Cell::Stem(_, _) => true,
+					_ => false,
+				}
 			});
 
 			for (other_pos, cell) in to {
@@ -58,5 +60,9 @@ impl<const N: usize> LSystem<N> {
 
 	pub fn state(&self) -> &Grid {
 		&self.state
+	}
+
+	pub fn queue(&self) -> &VecDeque<[isize; 2]> {
+		&self.stem_queue
 	}
 }

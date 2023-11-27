@@ -4,7 +4,6 @@ mod cell;
 
 use std::env;
 
-use cell::Cell::*;
 use grid::Grid;
 use l_system::LSystem;
 
@@ -13,24 +12,30 @@ use crate::cell::Direction;
 
 fn main() {
 	env::set_var("RUST_BACKTRACE", "1");
-
+	
+	use cell::Cell as C;
     let mut system = LSystem::new(
-		Grid::single(Stem(0, Direction::UP)),
-		[
-			Grid::new(3, 3, &[
-					Passive, Passive, Stem(1, Direction::DOWN),
-					Passive, Empty, Empty,
-					Stem(2, Direction::LEFT), Empty, Empty,
-				],
-				[0, 0]
-			),
-			Grid::vertical(&[Passive, Passive, Stem(2, Direction::LEFT)], 0),
-			Grid::vertical(&[Passive, Passive, Stem(1, Direction::RIGHT)], 0),
+		Grid::single(C::Stem(0, Direction::UP)),
+		vec![
+			Grid::new(5, 5, &[
+				C::Empty,					C:: Empty,	C::Stem(1, Direction::DOWN),C::Empty, 	C::Empty,
+				C::Empty,					C:: Empty,	C::Passive,					C::Empty, 	C::Empty,
+				C::Stem(1, Direction::LEFT),C:: Passive,C::Passive, 			 	C::Passive, C::Stem(1, Direction::RIGHT),
+				C::Empty,					C:: Empty,	C::Passive,					C::Empty, 	C::Empty,
+				C::Empty,					C:: Empty,	C::Stem(1, Direction::UP), 	C::Empty, 	C::Empty,
+			],
+			[2, 2]),
+			Grid::new(5, 3, &[
+				C::Stem(1, Direction::LEFT), 	C:: Passive,	C::Passive, 			 C::Passive, C::Stem(1, Direction::RIGHT),
+				C::Empty,   					C:: Empty,	C::Passive,					 C::Empty, C::Empty,
+				C::Empty,   					C:: Empty,	C::Stem(1, Direction::UP), 	 C::Empty, C::Empty,
+			],
+			[2, 0]),
 		],
 	);
 
-	for _ in 0..34 {
-		println!("{}\n", system.state());
+	for _ in 0..50 {
+		println!("{}", system.state());
 		system.try_step();
 	}
 	println!("{}", system.state());
