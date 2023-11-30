@@ -5,6 +5,7 @@ use std::collections::VecDeque;
 use grid::Grid;
 use cell::Cell;
 
+#[derive(Clone)]
 pub struct LSystem {
 	state: Grid,
 	rules: Vec<Grid>,
@@ -64,6 +65,23 @@ impl LSystem {
 
 	pub fn state(&self) -> &Grid {
 		&self.state
+	}
+
+	pub fn set_state(&mut self, grid: Grid) {
+		self.state = grid;
+
+		self.stem_queue.clear();
+
+		for ([x, y], cell) in &self.state {
+			match cell {
+				Cell::Stem(_, _) => self.stem_queue.push_back([x, y]),
+				_ => {}
+			}
+		}
+	}
+
+	pub fn rules(&self) -> &[Grid] {
+		&self.rules
 	}
 
 	// pub fn queue(&self) -> &VecDeque<[isize; 2]> {
