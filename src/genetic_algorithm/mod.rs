@@ -1,4 +1,4 @@
-mod evolve;
+pub mod evolve;
 
 use evolve::Evolve;
 
@@ -46,7 +46,10 @@ impl<T: Evolve> GeneticAlgorithm<T> {
 	}
 
 	pub fn perform_generation(&mut self) {
-		self.agents.truncate(self.survivors_count);
+		if self.generation_count > 0 {
+			self.agents.truncate(self.survivors_count);
+			self.agents.iter_mut().for_each(|e| e.0.reset());
+		}
 		self.reproduce();
 		self.calculate_fitnesses();
 		self.agents.sort_unstable_by(|e1, e2| e2.1.total_cmp(&e1.1));

@@ -1,10 +1,22 @@
 use std::fmt::Display;
 
+use rand::{rngs::ThreadRng, Rng};
+
 #[derive(Clone, Copy, Debug)]
 pub enum Cell {
 	Stem(u8, Direction),
 	Passive,
 	Empty,
+}
+
+impl Cell {
+	pub fn random(rng: &mut ThreadRng, stem_types: u8) -> Self {
+		match rng.gen_range(0..8) {
+			0 		=> Cell::Stem(rng.gen_range(1..stem_types), Direction::random(rng)),
+			1..=4 	=> Cell::Passive,
+			_ 		=> Cell::Empty,
+		}
+	}
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -13,6 +25,16 @@ pub enum Direction {
 }
 
 impl Direction {
+
+	pub fn random(rng: &mut ThreadRng) -> Self {
+		match rng.gen_range(0..4) {
+			0 => Direction::UP,
+			1 => Direction::LEFT,
+			2 => Direction::DOWN,
+			_ => Direction::RIGHT,
+		}
+	}
+
 	pub fn rotate_vals<T: Copy>(&self, a: T, b: T, c: T, d: T) -> [T; 4] {
 		match self {
 			Direction::UP => [a, b, c, d],
