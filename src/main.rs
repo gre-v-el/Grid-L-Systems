@@ -1,39 +1,144 @@
-mod l_system;
-
 use std::env;
 
-use l_system::grid::Grid;
-use l_system::LSystem;
-use l_system::cell::Direction;
+use rand::Rng;
+use rand::rngs::ThreadRng;
 
+use rand::seq::SliceRandom;
+use soft_evolution::l_system::LSystem;
+use soft_evolution::genetic_algorithm::{GeneticAlgorithm, evolve::Evolve};
+use soft_evolution::l_system::cell::{Cell, Direction};
+use soft_evolution::l_system::grid::Grid;
+
+
+pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
+	let width = rng.gen_range(1..=4);
+	let height = rng.gen_range(1..=4);
+
+	let mut contents = Vec::with_capacity(width * height);
+
+	for _ in 0..(width*height) {
+		let cell = Cell::random(rng, stem_types);
+		contents.push(cell);
+	}
+
+	Grid::new(width, height, contents, [rng.gen_range(0..width), rng.gen_range(0..height)])
+}
+
+struct LS(LSystem);
+
+impl Evolve for LS {
+    fn new_random(rng: &mut ThreadRng) -> Self {
+		let stem_types = rng.gen_range(2..=5u8);
+		let mut rules = Vec::with_capacity(stem_types as usize);
+
+		for _ in 0..stem_types {
+			rules.push(random_grid(rng, stem_types));
+		}
+
+        Self(LSystem::new(Grid::single(Cell::Stem(rng.gen_range(0..stem_types), Direction::UP)), rules))
+    }
+
+    fn reset(&mut self) {
+        self.0.set_state(Grid::single(Cell::Stem(0, Direction::UP)));
+    }
+
+    fn new_mutated(other: &Self, _factor: f32, rng: &mut ThreadRng) -> Self {
+		let mut rules = Vec::from(other.0.rules());
+
+		match rng.gen_range(0..=10) {
+			// delete a rule
+			0 if rules.len() > 2 => {
+				let to_delete = rng.gen_range(1..rules.len());
+				rules.remove(to_delete);
+				
+				let rules_len = rules.len();
+				for rule in &mut rules {
+					for cell in rule.contents_mut() {
+						if let Cell::Stem(n, _) = cell {
+							if *n as usize > to_delete { *n -= 1 }
+							if *n as usize == to_delete{ *n = rng.gen_range(1..rules_len as u8) }	
+						}
+					}
+				}
+			},
+			// add a rule
+			1 => {
+				let rules_len = rules.len();
+				for rule in &mut rules {
+					for cell in rule.contents_mut() {
+						if let Cell::Stem(n, _) = cell {
+							if rng.gen_bool(1.0 / (rules_len + 1) as f64) {
+								*n = rules_len as u8;
+							}
+						}
+					}
+				}
+
+				rules.push(random_grid(rng, (rules.len() + 1) as u8));
+			},
+			// expand a rule
+			2 => {
+				let rules_len = rules.len();
+				let rule = rules.choose_mut(rng).unwrap();
+				rule.expand(Direction::random(rng), rng, rules_len as u8);
+			}
+			// contract a rule
+			3 => {
+				let rule = rules.choose_mut(rng).unwrap();
+				rule.contract(Direction::random(rng));
+			}
+			// mutate cells
+			_ => {
+				let rules_len = rules.len();
+				for rule in &mut rules {
+					for cell in rule.contents_mut() {
+						if rng.gen_bool(0.1) {
+							*cell = Cell::random(rng, rules_len as u8);
+						}
+					}
+				}
+			},
+		}
+
+		// clear dead rules
+		let mut used = vec![false; rules.len()];
+		for rule in &rules {
+			for cell in rule.contents() {
+				if let Cell::Stem(n, _) = cell {
+					used[*n as usize] = true;
+				}
+			}
+		}
+
+		for (i, keep) in used.into_iter().enumerate().rev() {
+			if keep { continue; }
+			
+			rules.remove(i);
+				
+			for rule in &mut rules {
+				for cell in rule.contents_mut() {
+					if let Cell::Stem(n, _) = cell {
+						if *n as usize > i { *n -= 1 }
+					}
+				}
+			}
+		}
+
+		// shrink empty borders
+		for rule in &mut rules {
+			rule.contract_empty();
+		}
+
+		LS(LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), rules))
+    }
+
+    fn fitness(&mut self) -> f32 {
+        todo!()
+    }
+}
 
 fn main() {
 	env::set_var("RUST_BACKTRACE", "1");
 	
-	use l_system::cell::Cell as C;
-    let mut system = LSystem::new(
-		Grid::single(C::Stem(0, Direction::UP)),
-		vec![
-			Grid::new(5, 5, &[
-				C::Empty,					C:: Empty,	C::Stem(1, Direction::DOWN),C::Empty, 	C::Empty,
-				C::Empty,					C:: Empty,	C::Passive,					C::Empty, 	C::Empty,
-				C::Stem(1, Direction::LEFT),C:: Passive,C::Passive, 			 	C::Passive, C::Stem(1, Direction::RIGHT),
-				C::Empty,					C:: Empty,	C::Passive,					C::Empty, 	C::Empty,
-				C::Empty,					C:: Empty,	C::Stem(1, Direction::UP), 	C::Empty, 	C::Empty,
-			],
-			[2, 2]),
-			Grid::new(5, 3, &[
-				C::Stem(1, Direction::LEFT), 	C:: Passive,	C::Passive, 			 C::Passive, C::Stem(1, Direction::RIGHT),
-				C::Empty,   					C:: Empty,	C::Passive,					 C::Empty, C::Empty,
-				C::Empty,   					C:: Empty,	C::Stem(1, Direction::UP), 	 C::Empty, C::Empty,
-			],
-			[2, 0]),
-		],
-	);
-
-	for _ in 0..50 {
-		println!("{}", system.state());
-		system.try_step();
-	}
-	println!("{}", system.state());
+	let alg: GeneticAlgorithm<LS> = GeneticAlgorithm::new(100, 30, 1.0);
 }
