@@ -1,7 +1,10 @@
 use std::fmt::Display;
 
+use rand::rngs::ThreadRng;
+
 use crate::l_system::cell::{Cell, Direction};
 
+#[derive(Clone)]
 pub struct Grid {
 	contents: Vec<Cell>,
 	width: usize,
@@ -10,12 +13,12 @@ pub struct Grid {
 }
 
 impl Grid {
-	pub fn new(width: usize, height: usize, contents: &[Cell], shift: [usize; 2]) -> Self {
+	pub fn new(width: usize, height: usize, contents: Vec<Cell>, shift: [usize; 2]) -> Self {
 		assert!(width > shift[0] && height > shift[1]);
 		Self {
 			width,
 			height,
-			contents: Vec::from(contents),
+			contents: contents,
 			shift,
 		}
 	}
@@ -144,9 +147,124 @@ impl Grid {
 		}
 	}
 
+	pub fn contract(&mut self, direction: Direction) {
+		match direction {
+			Direction::UP => {
+				if self.height < 2 { return; }
+
+				let len = self.contents.len();
+				let start = len - self.width;
+				self.contents.drain(start..len);
+				self.height -= 1;
+			},
+			Direction::LEFT => {
+				if self.width < 2 { return; }
+
+				let mut i = 0;
+				self.contents.retain(|_| {
+					let ret = i % self.width == 0;
+					i += 1;
+					ret
+				});
+				self.width -= 1;
+			},
+			Direction::DOWN => {
+				if self.height < 2 { return; }
+
+				self.contents.drain(0..self.width);
+				self.height -= 1;
+			},
+			Direction::RIGHT => {
+				if self.width < 2 { return; }
+
+				let mut i = 0;
+				self.contents.retain(|_| {
+					let ret = i % self.width == self.width - 1;
+					i += 1;
+					ret
+				});
+				self.width -= 1;
+			},
+		}
+	}
+
+	pub fn expand(&mut self, direction: Direction, rng: &mut ThreadRng, stem_types: u8) {
+		match direction{
+			Direction::UP => {
+				for _ in 0..self.width {
+					self.contents.push(Cell::random(rng, stem_types));
+				}
+
+				self.height += 1;
+			},
+			Direction::LEFT => {
+				for i in (0..self.height).rev() {
+					self.contents.insert(self.width * i, Cell::random(rng, stem_types));
+				}
+
+				self.width += 1;
+			},
+			Direction::DOWN => {
+				let mut new_contents = Vec::with_capacity((self.height + 1) * self.width);
+				for _ in 0..self.width {
+					new_contents.push(Cell::random(rng, stem_types));
+				}
+				new_contents.append(&mut self.contents);
+				self.contents = new_contents;
+
+				self.height += 1;
+			},
+			Direction::RIGHT => {
+				for i in (0..self.height).rev() {
+					self.contents.insert(self.width * (i+1), Cell::random(rng, stem_types));
+				}
+
+				self.width += 1;
+			},
+		}
+	}
+
+	pub fn contract_empty(&mut self) {
+		while self.try_contract_empty() {}
+	}
+
+	pub fn try_contract_empty(&mut self) -> bool {
+		let mut top = true;
+		let mut bottom = true;
+		let mut left = true;
+		let mut right = true;
+
+		for x in 0..self.width {
+			if let Cell::Empty = self.at_raw([x, 0]) {}
+			else { bottom = false; }
+			
+			if let Cell::Empty = self.at_raw([x, self.height-1]) {}
+			else { top = false; }
+		}
+
+		for y in 0..self.height {
+			if let Cell::Empty = self.at_raw([0, y]) {}
+			else { left = false; }
+			
+			if let Cell::Empty = self.at_raw([self.width-1, y]) {}
+			else { right = false; }
+		}
+
+		if top { self.contract(Direction::UP) }
+		if bottom { self.contract(Direction::DOWN) }
+		if left { self.contract(Direction::LEFT) }
+		if right { self.contract(Direction::RIGHT) }
+
+		top || bottom || left || right
+	}
+
 
 	pub fn contents(&self) -> &Vec<Cell> {
 		&self.contents
+	}
+
+	pub fn contents_mut(&mut self) -> &mut Vec<Cell> {
+		&mut self.contents
 	}
 
 	pub fn width(&self) -> usize {
@@ -157,6 +275,9 @@ impl Grid {
 		self.height
 	}
 }
+
+
+
 
 impl<'a> IntoIterator for &'a Grid {
     type Item = ([isize; 2], Cell);
@@ -191,7 +312,6 @@ impl<'a> Iterator for GridIterator<'a> {
 		Some(([x as isize - self.grid.shift[0] as isize, y as isize - self.grid.shift[1] as isize], ret))
     }
 }
-
 
 
 impl Display for Grid {
