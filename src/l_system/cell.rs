@@ -17,6 +17,26 @@ impl Cell {
 			_ 		=> Cell::Empty,
 		}
 	}
+
+	pub fn same_type(&self, other: &Self) -> bool {
+		match self {
+			Cell::Stem(_, _) => match other {
+				Cell::Stem(_, _) => true,
+				Cell::Passive => 	false,
+				Cell::Empty => 		false,
+			},
+			Cell::Passive => 	match other {
+				Cell::Stem(_, _) => false,
+				Cell::Passive => 	true,
+				Cell::Empty => 		false,
+			},
+			Cell::Empty => 		match other {
+				Cell::Stem(_, _) => false,
+				Cell::Passive => 	false,
+				Cell::Empty => 		true,
+			},
+		}
+	}
 }
 
 #[derive(Clone, Copy, Debug)]

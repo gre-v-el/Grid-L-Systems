@@ -65,15 +65,25 @@ impl Grid {
 		[(pos[0] + self.shift[0] as isize) as usize, (pos[1] + self.shift[1] as isize) as usize]
 	}
 
-	// fn raw_pos_to_pos(&self, raw_pos: [usize; 2]) -> [isize; 2] {
-	// 	[raw_pos[0] as isize - self.shift[0] as isize, raw_pos[1] as isize - self.shift[1] as isize]
-	// }
+	fn raw_pos_to_pos(&self, raw_pos: [usize; 2]) -> [isize; 2] {
+		[raw_pos[0] as isize - self.shift[0] as isize, raw_pos[1] as isize - self.shift[1] as isize]
+	}
+
+	pub fn at_unchecked(&self, pos: [isize; 2]) -> Cell {
+		self.contents[self.pos_to_index(pos)]
+	}
+
+	pub fn at_raw_unchecked(&self, raw_pos: [usize; 2]) -> Cell {
+		self.contents[self.raw_pos_to_index(raw_pos)]
+	}
 
 	pub fn at(&self, pos: [isize; 2]) -> Cell {
+		if !self.contains(pos) { return Cell::Empty; }
 		self.contents[self.pos_to_index(pos)]
 	}
 
 	pub fn at_raw(&self, raw_pos: [usize; 2]) -> Cell {
+		if !self.contains(self.raw_pos_to_pos(raw_pos)) { return Cell::Empty; }
 		self.contents[self.raw_pos_to_index(raw_pos)]
 	}
 
@@ -273,6 +283,31 @@ impl Grid {
 
 	pub fn height(&self) -> usize {
 		self.height
+	}
+
+	pub fn score_simmilarity(&self, other: &Self) -> f32 {
+		let mut score = 0.0;
+
+		for ([x, y], cell) in self {
+			let equal = cell.same_type(&other.at([x, y]));
+			let self_empty = cell.same_type(&Cell::Empty);
+			if equal && !self_empty {
+				score += 1.0;
+			}
+			else if !equal {
+				score -= 1.0;
+			}
+		}
+		for ([x, y], cell) in other {
+			if self.contains([x, y]) { continue; }
+
+			// we are outside self, so it is self.at([x, y]) is empty
+			if !cell.same_type(&Cell::Empty) {
+				score -= 1.0;
+			}
+		}
+		
+		score
 	}
 }
 

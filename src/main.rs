@@ -1,5 +1,6 @@
 use std::env;
 
+use lazy_static::lazy_static;
 use rand::Rng;
 use rand::rngs::ThreadRng;
 
@@ -8,6 +9,16 @@ use soft_evolution::l_system::LSystem;
 use soft_evolution::genetic_algorithm::{GeneticAlgorithm, evolve::Evolve};
 use soft_evolution::l_system::cell::{Cell, Direction};
 use soft_evolution::l_system::grid::Grid;
+
+lazy_static!(
+	static ref TEMPLATE: Grid = Grid::new(5, 5, vec![
+		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
+		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
+		Cell::Passive, 	Cell::Passive, 	Cell::Passive, Cell::Passive, 	Cell::Passive, 
+		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
+		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
+	], [2, 2]);
+);
 
 
 pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
@@ -133,12 +144,19 @@ impl Evolve for LS {
     }
 
     fn fitness(&mut self) -> f32 {
-        todo!()
+    	for _ in 0..50 {
+		   self.0.try_step()
+		}
+		
+		TEMPLATE.score_simmilarity(self.0.state())
     }
 }
 
 fn main() {
 	env::set_var("RUST_BACKTRACE", "1");
 	
-	let alg: GeneticAlgorithm<LS> = GeneticAlgorithm::new(100, 30, 1.0);
+	let mut alg: GeneticAlgorithm<LS> = GeneticAlgorithm::new(100, 30, 1.0);
+	alg.perform_generations(10);
+	println!("{}", alg.best().0.0.state());
+
 }
