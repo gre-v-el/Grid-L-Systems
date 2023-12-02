@@ -13,8 +13,35 @@ pub struct Grid {
 }
 
 impl Grid {
+
+	pub fn from_string(string: &str, shift: [usize; 2]) -> Option<Grid> {
+		let mut width = 0;
+		let mut height = 0;
+		let mut contents = Vec::new();
+
+		for line in string.lines().rev() {
+			let mut line_length = 0;
+			for ch in line.chars() {
+				contents.push(match ch {
+					'.' => Cell::Empty,
+					_ => Cell::Passive,
+				});
+				line_length += 1;
+			}
+
+			if width == 0 { width = line_length }
+			else if width != line_length {
+				return None;
+			}
+			height += 1;
+		}
+
+		Some(Grid::new(width, height, contents, shift))
+	}
+
 	pub fn new(width: usize, height: usize, contents: Vec<Cell>, shift: [usize; 2]) -> Self {
 		assert!(width > shift[0] && height > shift[1]);
+		assert!(width*height == contents.len());
 		Self {
 			width,
 			height,
@@ -83,7 +110,7 @@ impl Grid {
 	}
 
 	pub fn at_raw(&self, raw_pos: [usize; 2]) -> Cell {
-		if !self.contains(self.raw_pos_to_pos(raw_pos)) { return Cell::Empty; }
+		if !self.contains_raw(raw_pos) { return Cell::Empty; }
 		self.contents[self.raw_pos_to_index(raw_pos)]
 	}
 
@@ -96,6 +123,11 @@ impl Grid {
 		(pos[1] + self.shift[1] as isize) >= 0 &&
 		(pos[0] + self.shift[0] as isize) < self.width as isize &&
 		(pos[1] + self.shift[1] as isize) < self.height as isize
+	}
+
+	pub fn contains_raw(&self, pos: [usize; 2]) -> bool {
+		pos[0] < self.width &&
+		pos[1] < self.height
 	}
 
 
@@ -157,10 +189,10 @@ impl Grid {
 		}
 	}
 
-	pub fn contract(&mut self, direction: Direction) {
+	pub fn contract(&mut self, direction: Direction) -> bool {
 		match direction {
 			Direction::UP => {
-				if self.height < 2 { return; }
+				if self.height < 2 || self.shift[1] == self.height - 1 { return false; }
 
 				let len = self.contents.len();
 				let start = len - self.width;
@@ -168,34 +200,46 @@ impl Grid {
 				self.height -= 1;
 			},
 			Direction::LEFT => {
-				if self.width < 2 { return; }
+				if self.width < 2 || self.shift[0] == 0 { return false; }
 
 				let mut i = 0;
 				self.contents.retain(|_| {
 					let ret = i % self.width == 0;
 					i += 1;
-					ret
+					!ret
 				});
+
+				self.shift[0] -= 1;
 				self.width -= 1;
 			},
 			Direction::DOWN => {
-				if self.height < 2 { return; }
+				if self.height < 2 || self.shift[1] == 0 { return false; }
 
 				self.contents.drain(0..self.width);
+
+				self.shift[1] -= 1;
 				self.height -= 1;
 			},
 			Direction::RIGHT => {
-				if self.width < 2 { return; }
+				if self.width < 2 || self.shift[0] == self.width - 1 { return false; }
 
 				let mut i = 0;
 				self.contents.retain(|_| {
 					let ret = i % self.width == self.width - 1;
 					i += 1;
-					ret
+					!ret
 				});
 				self.width -= 1;
 			},
 		}
+
+		assert!(self.shift[0] < self.width);
+		assert!(self.shift[1] < self.height);
+		assert!(self.width > 0);
+		assert!(self.height > 0);
+		assert!(self.height * self.width == self.contents.len());
+
+		true
 	}
 
 	pub fn expand(&mut self, direction: Direction, rng: &mut ThreadRng, stem_types: u8) {
@@ -212,6 +256,7 @@ impl Grid {
 					self.contents.insert(self.width * i, Cell::random(rng, stem_types));
 				}
 
+				self.shift[0] += 1;
 				self.width += 1;
 			},
 			Direction::DOWN => {
@@ -222,6 +267,7 @@ impl Grid {
 				new_contents.append(&mut self.contents);
 				self.contents = new_contents;
 
+				self.shift[1] += 1;
 				self.height += 1;
 			},
 			Direction::RIGHT => {
@@ -260,10 +306,10 @@ impl Grid {
 			else { right = false; }
 		}
 
-		if top { self.contract(Direction::UP) }
-		if bottom { self.contract(Direction::DOWN) }
-		if left { self.contract(Direction::LEFT) }
-		if right { self.contract(Direction::RIGHT) }
+		if top 	  { top    = self.contract(Direction::UP); }
+		if bottom { bottom = self.contract(Direction::DOWN); }
+		if left   { left   = self.contract(Direction::LEFT); }
+		if right  { right  = self.contract(Direction::RIGHT); }
 
 		top || bottom || left || right
 	}

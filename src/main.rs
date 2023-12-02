@@ -11,13 +11,7 @@ use soft_evolution::l_system::cell::{Cell, Direction};
 use soft_evolution::l_system::grid::Grid;
 
 lazy_static!(
-	static ref TEMPLATE: Grid = Grid::new(5, 5, vec![
-		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
-		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
-		Cell::Passive, 	Cell::Passive, 	Cell::Passive, Cell::Passive, 	Cell::Passive, 
-		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
-		Cell::Empty, 	Cell::Empty, 	Cell::Passive, Cell::Empty, 	Cell::Empty, 
-	], [2, 2]);
+	static ref TEMPLATE: Grid = Grid::from_string(include_str!("templates/body.txt"), [0, 1]).unwrap();
 );
 
 
@@ -35,6 +29,7 @@ pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
 	Grid::new(width, height, contents, [rng.gen_range(0..width), rng.gen_range(0..height)])
 }
 
+#[derive(Clone)]
 struct LS(LSystem);
 
 impl Evolve for LS {
@@ -56,7 +51,8 @@ impl Evolve for LS {
     fn new_mutated(other: &Self, _factor: f32, rng: &mut ThreadRng) -> Self {
 		let mut rules = Vec::from(other.0.rules());
 
-		match rng.gen_range(0..=10) {
+		let choice = rng.gen_range(0..=10);
+		match choice {
 			// delete a rule
 			0 if rules.len() > 2 => {
 				let to_delete = rng.gen_range(1..rules.len());
@@ -111,29 +107,34 @@ impl Evolve for LS {
 			},
 		}
 
-		// clear dead rules
-		let mut used = vec![false; rules.len()];
-		for rule in &rules {
-			for cell in rule.contents() {
-				if let Cell::Stem(n, _) = cell {
-					used[*n as usize] = true;
-				}
-			}
-		}
+		// println!("{}", "-".repeat(30));
+		// // clear dead rules
+		// let mut used = vec![false; rules.len()];
+		// used[0] = true;
+		// for rule in &rules {
+		// 	println!("{}", rule);
+		// 	for cell in rule.contents() {
+		// 		if let Cell::Stem(n, _) = cell {
+		// 			used[*n as usize] = true;
+		// 		}
+		// 	}
+		// }
 
-		for (i, keep) in used.into_iter().enumerate().rev() {
-			if keep { continue; }
+		// println!("{:?}", used);
+
+		// for (i, keep) in used.into_iter().enumerate().rev() {
+		// 	if keep { continue; }
 			
-			rules.remove(i);
+		// 	rules.remove(i);
 				
-			for rule in &mut rules {
-				for cell in rule.contents_mut() {
-					if let Cell::Stem(n, _) = cell {
-						if *n as usize > i { *n -= 1 }
-					}
-				}
-			}
-		}
+		// 	for rule in &mut rules {
+		// 		for cell in rule.contents_mut() {
+		// 			if let Cell::Stem(n, _) = cell {
+		// 				if *n as usize > i { *n -= 1 }
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		// shrink empty borders
 		for rule in &mut rules {
@@ -144,19 +145,42 @@ impl Evolve for LS {
     }
 
     fn fitness(&mut self) -> f32 {
-    	for _ in 0..50 {
-		   self.0.try_step()
+    	for _ in 0..40 {
+		   self.0.try_step();
 		}
-		
-		TEMPLATE.score_simmilarity(self.0.state())
-    }
+
+		let simmilarity = TEMPLATE.score_simmilarity(self.0.state());
+		let mut rules_cells = 0;
+
+		for rule in self.0.rules() {
+			rules_cells += rule.contents().len() * rule.contents().len();
+		}
+
+		f32::powf(2.0, simmilarity) / rules_cells as f32
+	}
 }
 
 fn main() {
 	env::set_var("RUST_BACKTRACE", "1");
 	
 	let mut alg: GeneticAlgorithm<LS> = GeneticAlgorithm::new(100, 30, 1.0);
-	alg.perform_generations(10);
-	println!("{}", alg.best().0.0.state());
+	for _ in 0..1000 {
+		alg.perform_generation();
+	}
+	let mut best = alg.best().0.clone();
+	best.reset();
+	let mut best = best.0;
+	
+	
+	for (i, rule) in best.rules().iter().enumerate() {
+		println!("{i}\nV\n{rule}");
+	}
+
+	println!("{}", "\n".repeat(5));
+	
+	for _ in 0..40 {
+		println!("{}", best.state());
+		best.try_step();
+	}
 
 }
