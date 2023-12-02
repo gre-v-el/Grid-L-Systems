@@ -14,6 +14,8 @@ pub struct LSystem {
 
 impl LSystem {
 	pub fn new(state: Grid, rules: Vec<Grid>) -> Self {
+		assert!(rules.len() > 0);
+		
 		let mut stem_queue = VecDeque::new();
 		
 		for ([x, y], cell) in &state {
@@ -30,8 +32,8 @@ impl LSystem {
 		}
 	}
 
-	pub fn try_step(&mut self) {
-		if self.stem_queue.is_empty() { return; }
+	pub fn try_step(&mut self) -> bool {
+		if self.stem_queue.is_empty() { return false; }
 
 		let pos = self.stem_queue.pop_front().unwrap();
 
@@ -57,10 +59,17 @@ impl LSystem {
 					_ => {}
 				}
 			}
+
+			// if the cell that was just used didn't cover itself up, push it back
+			if let Cell::Stem(_, _) = self.state.at(pos) {
+				self.stem_queue.push_back(pos);
+			}
 		}
 		else {
 			panic!();
 		}
+
+		return true;
 	}
 
 	pub fn state(&self) -> &Grid {
@@ -84,7 +93,7 @@ impl LSystem {
 		&self.rules
 	}
 
-	// pub fn queue(&self) -> &VecDeque<[isize; 2]> {
-	// 	&self.stem_queue
-	// }
+	pub fn queue(&self) -> &VecDeque<[isize; 2]> {
+		&self.stem_queue
+	}
 }
