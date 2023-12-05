@@ -1,7 +1,10 @@
 mod ls_evolve;
 mod controls;
 mod state;
-mod tabs;
+mod edit_tab;
+mod evolve_tab;
+mod grow_tab;
+mod drawing;
 
 use std::env;
 use egui_macroquad::macroquad::{self, prelude::*};

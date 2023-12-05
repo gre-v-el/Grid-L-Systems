@@ -88,10 +88,11 @@ impl Grid {
 		raw_pos[0] + raw_pos[1] * self.width
 	}
 
-	fn pos_to_raw_pos(&self, pos: [isize; 2]) -> [usize; 2] {
+	pub fn pos_to_raw_pos(&self, pos: [isize; 2]) -> [usize; 2] {
 		[(pos[0] + self.shift[0] as isize) as usize, (pos[1] + self.shift[1] as isize) as usize]
 	}
 
+	#[allow(dead_code)]
 	fn raw_pos_to_pos(&self, raw_pos: [usize; 2]) -> [isize; 2] {
 		[raw_pos[0] as isize - self.shift[0] as isize, raw_pos[1] as isize - self.shift[1] as isize]
 	}

@@ -1,5 +1,14 @@
-use crate::tabs::{Tab, EditTab, EvolveTab, GrowTab};
-use egui_macroquad::egui;
+use egui_macroquad::egui::{self, Context};
+
+use crate::{edit_tab::EditTab, evolve_tab::EvolveTab, grow_tab::GrowTab};
+
+pub trait Tab {
+	fn new() -> Self where Self: Sized;
+	fn frame(&mut self, can_use_mouse: bool);
+	fn draw_ui(&mut self, ctx: &Context);
+}
+
+
 
 pub struct State {
 	is_ui_using_mouse: bool,
