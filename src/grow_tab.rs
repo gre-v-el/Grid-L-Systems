@@ -13,8 +13,8 @@ impl Tab for GrowTab {
 		}
     }
 
-    fn frame(&mut self, _can_use_mouse: bool) {
-		self.controls.update();
+    fn frame(&mut self, can_use_mouse: bool) {
+		self.controls.update(can_use_mouse);
 		set_camera(self.controls.camera());
         draw_rectangle(0.0, 0.0, 1.0, 1.0, RED);
     }

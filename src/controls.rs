@@ -30,40 +30,42 @@ impl Controls {
 		}
 	}
 
-	pub fn update(&mut self) {
+	pub fn update(&mut self, can_move: bool) {
 
 		let mouse_screen: Vec2 = mouse_position().into();
 		self.mouse_world = self.target.screen_to_world(mouse_screen);
 		
-		let d_zoom = 
-			if is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) {
-				0.0
-			} else {
-				mouse_wheel().1 + if is_mouse_button_down(MouseButton::Middle) {
-					(self.target.screen_to_world(mouse_screen).y - self.last_mouse_world.y)*3.0
-				} else { 0.0 }
-			};
+		if can_move {
+			let d_zoom = 
+				if is_key_down(KeyCode::LeftControl) || is_key_down(KeyCode::RightControl) {
+					0.0
+				} else {
+					mouse_wheel().1 + if is_mouse_button_down(MouseButton::Middle) {
+						(self.target.screen_to_world(mouse_screen).y - self.last_mouse_world.y)*3.0
+					} else { 0.0 }
+				};
 
-		if d_zoom != 0.0 {
-			self.target.target = self.mouse_world;
+			if d_zoom != 0.0 {
+				self.target.target = self.mouse_world;
 
-			self.target.zoom.x = self.target.zoom.x * 1.001f32.powf(d_zoom);
-			self.target.zoom.y = self.target.zoom.x * screen_width() / screen_height();
+				self.target.zoom.x = self.target.zoom.x * 1.001f32.powf(d_zoom);
+				self.target.zoom.y = self.target.zoom.x * screen_width() / screen_height();
 
-			let mouse_world = self.target.screen_to_world(mouse_screen);
+				let mouse_world = self.target.screen_to_world(mouse_screen);
 
-			self.target.target += self.target.target - mouse_world;
+				self.target.target += self.target.target - mouse_world;
+			}
+			else {
+				self.target.zoom.y = self.target.zoom.x * screen_width() / screen_height();
+			}
+
+			if is_mouse_button_down(MouseButton::Right) {
+				self.target.target -= self.mouse_world - self.last_mouse_world;
+			}
+			
+			self.camera.target = lerp(self.camera.target..=self.target.target, 1.0 - 0.1f32.powf(10.0*get_frame_time()));
+			self.camera.zoom =   lerp(self.camera.zoom..=self.target.zoom,   1.0 - 0.1f32.powf(10.0*get_frame_time()));
 		}
-		else {
-			self.target.zoom.y = self.target.zoom.x * screen_width() / screen_height();
-		}
-
-		if is_mouse_button_down(MouseButton::Right) {
-			self.target.target -= self.mouse_world - self.last_mouse_world;
-		}
-		
-		self.camera.target = lerp(self.camera.target..=self.target.target, 1.0 - 0.1f32.powf(10.0*get_frame_time()));
-		self.camera.zoom =   lerp(self.camera.zoom..=self.target.zoom,   1.0 - 0.1f32.powf(10.0*get_frame_time()));
 
 		self.drag = self.mouse_world - self.last_mouse_world;
         self.last_mouse_world = self.target.screen_to_world(mouse_screen);

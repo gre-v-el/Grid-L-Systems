@@ -1,4 +1,4 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Align2, FontId, Rect, vec2, pos2, Stroke, Layout, Align, Label, RichText, Color32, Button}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Rect, vec2, pos2, Stroke, Layout, Align, Label, RichText, Color32, Button, WidgetText, TextStyle, ScrollArea}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}};
 
 use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, cell_col, arr_to_col}, state::Tab};
@@ -25,51 +25,72 @@ impl EditTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
-				for (i, rule) in self.l_rules.iter().enumerate() {
-					let (rect, response) = ui.allocate_at_least(Vec2::new(150.0, 40.0), Sense::click());
-
-		            let visuals = ui.style().interact_selectable(&response, self.current_rule==i);
+				ScrollArea::vertical().show(ui, |ui| {
+					for (i, rule) in self.l_rules.iter().enumerate() {
+						let (rect, response) = ui.allocate_exact_size(Vec2::new(150.0, 40.0), Sense::click());
+	
+						let visuals = ui.style().interact_selectable(&response, self.current_rule==i);
+						ui.painter().rect(rect, visuals.rounding, visuals.bg_fill, visuals.bg_stroke);
+	
+						if response.clicked() {
+							self.current_rule = i;
+						}
+	
+						let mut ui = ui.child_ui(rect, Layout::left_to_right(Align::Center));
+						ui.add_space(5.0);
+						ui.add(Label::new(RichText::new(format!("rule {i}")).color(Color32::WHITE)));
+	
+						if ui.add_enabled(self.l_rules.len() > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0))).clicked() {
+							to_delete = Some(i);
+						}
+	
+						let mut rect = ui.available_rect_before_wrap().shrink(5.0);
+						
+						let aspect = rule.width() as f32 / rule.height() as f32;
+						if aspect > rect.aspect_ratio() {
+							rect = rect.shrink2(vec2(0.0, (rect.height() - rect.width() / aspect)*0.5));
+						}
+						else {
+							rect = rect.shrink2(vec2((rect.width() - rect.height() * aspect)*0.5, 0.0));
+						}
+						
+						let scale = rect.width() / rule.width() as f32;
+						for ([x, y], cell) in rule {
+							if cell.same_type(&Cell::Empty) { continue; }
+							let [x, y] = rule.pos_to_raw_pos([x, y]);
+							ui.painter().rect(
+								Rect::from_min_size(
+									pos2(x as f32 * scale, (rule.height() - 1 - y) as f32 * scale) + rect.min.to_vec2(), 
+									vec2(scale, scale)), 
+									0.0, 
+									arr_to_col(cell_col(&cell)
+								), 
+								Stroke::NONE
+							);
+						}
+					}
+	
+					ui.add_space(7.5);
+	
+					let (rect, response) = ui.allocate_exact_size(Vec2::new(150.0, 25.0), Sense::click());
+	
+					let visuals = ui.style().interact(&response);
 					ui.painter().rect(rect, visuals.rounding, visuals.bg_fill, visuals.bg_stroke);
-
+	
+					let text = WidgetText::from("\u{271A}");
+	
+					let text = text.into_galley(ui, None, 150.0, TextStyle::Button);
+					let text_pos = Layout::top_down(Align::Center)
+						.align_size_within_rect(text.size(), rect.shrink(5.0))
+						.min;
+					text.paint_with_visuals(ui.painter(), text_pos, &visuals);
+	
 					if response.clicked() {
-						self.current_rule = i;
+						self.l_rules.push(Grid::single(Cell::Passive));
 					}
 
-					let mut ui = ui.child_ui(rect, Layout::left_to_right(Align::Center));
-					ui.add_space(5.0);
-					ui.add(Label::new(RichText::new(format!("rule {i}")).color(Color32::WHITE)));
-
-					if ui.add_enabled(self.l_rules.len() > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0))).clicked() {
-						to_delete = Some(i);
-					}
-
-					let mut rect = ui.available_rect_before_wrap().shrink(5.0);
-					
-					let aspect = rule.width() as f32 / rule.height() as f32;
-					if aspect > rect.aspect_ratio() {
-						rect = rect.shrink2(vec2(0.0, (rect.height() - rect.width() / aspect)*0.5));
-					}
-					else {
-						rect = rect.shrink2(vec2((rect.width() - rect.height() * aspect)*0.5, 0.0));
-					}
-					
-					let scale = rect.width() / rule.width() as f32;
-					for ([x, y], cell) in rule {
-						if cell.same_type(&Cell::Empty) { continue; }
-						let [x, y] = rule.pos_to_raw_pos([x, y]);
-						ui.painter().rect(
-							Rect::from_min_size(
-								pos2(x as f32 * scale, (rule.height() - 1 - y) as f32 * scale) + rect.min.to_vec2(), 
-								vec2(scale, scale)), 
-								0.0, 
-								arr_to_col(cell_col(&cell)
-							), 
-							Stroke::NONE
-						);
-					}
-				}
-
-
+					ui.add_space(160.0);
+				});
 			});
 		
 		if let Some(i) = to_delete {
@@ -138,7 +159,7 @@ impl Tab for EditTab {
     }
 
     fn frame(&mut self, can_use_mouse: bool) {
-		self.controls.update();
+		self.controls.update(can_use_mouse);
 
 		if is_mouse_button_down(MouseButton::Left) && can_use_mouse {
 			let pos: [i32; 2] = self.controls.mouse_world.floor().as_ivec2().into();
