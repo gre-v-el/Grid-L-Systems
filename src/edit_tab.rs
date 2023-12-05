@@ -1,4 +1,4 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Align2, FontId, Rect, vec2, pos2, Stroke}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Align2, FontId, Rect, vec2, pos2, Stroke, Layout, Align, Label, RichText, Color32, Button}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}};
 
 use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, cell_col, arr_to_col}, state::Tab};
@@ -19,6 +19,8 @@ pub struct EditTab {
 impl EditTab {
 
 	pub fn rules_ui(&mut self, ctx: &Context) {
+		let mut to_delete = None;
+
 		SidePanel::new(Side::Left, "Rule Choice")
 			.resizable(false)
 			.default_width(150.0)
@@ -27,28 +29,37 @@ impl EditTab {
 					let (rect, response) = ui.allocate_at_least(Vec2::new(150.0, 40.0), Sense::click());
 
 		            let visuals = ui.style().interact_selectable(&response, self.current_rule==i);
-
 					ui.painter().rect(rect, visuals.rounding, visuals.bg_fill, visuals.bg_stroke);
 
 					if response.clicked() {
 						self.current_rule = i;
 					}
 
-					let painter = ui.painter_at(rect);
+					let mut ui = ui.child_ui(rect, Layout::left_to_right(Align::Center));
+					ui.add_space(5.0);
+					ui.add(Label::new(RichText::new(format!("rule {i}")).color(Color32::WHITE)));
+
+					if ui.add_enabled(self.l_rules.len() > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0))).clicked() {
+						to_delete = Some(i);
+					}
+
+					let mut rect = ui.available_rect_before_wrap().shrink(5.0);
 					
-					painter.text(rect.left_center() + Vec2::new(5.0, 0.0), Align2::LEFT_CENTER, format!("rule {i}"), FontId::monospace(12.0), visuals.text_color());
-				
-					let mut thumb_rect = rect.shrink(5.0);
-					thumb_rect.set_left(thumb_rect.right() - thumb_rect.height());
+					let aspect = rule.width() as f32 / rule.height() as f32;
+					if aspect > rect.aspect_ratio() {
+						rect = rect.shrink2(vec2(0.0, (rect.height() - rect.width() / aspect)*0.5));
+					}
+					else {
+						rect = rect.shrink2(vec2((rect.width() - rect.height() * aspect)*0.5, 0.0));
+					}
 					
-					let painter = ui.painter_at(thumb_rect);
-					let scale = thumb_rect.width() / rule.width().max(rule.height()) as f32;
+					let scale = rect.width() / rule.width() as f32;
 					for ([x, y], cell) in rule {
 						if cell.same_type(&Cell::Empty) { continue; }
 						let [x, y] = rule.pos_to_raw_pos([x, y]);
-						painter.rect(
+						ui.painter().rect(
 							Rect::from_min_size(
-								pos2(x as f32 * scale, (rule.height() - 1 - y) as f32 * scale) + thumb_rect.min.to_vec2(), 
+								pos2(x as f32 * scale, (rule.height() - 1 - y) as f32 * scale) + rect.min.to_vec2(), 
 								vec2(scale, scale)), 
 								0.0, 
 								arr_to_col(cell_col(&cell)
@@ -57,7 +68,15 @@ impl EditTab {
 						);
 					}
 				}
+
+
 			});
+		
+		if let Some(i) = to_delete {
+			if i < self.l_rules.len() {
+				self.l_rules.remove(i);
+			}
+		}
 	}
 
 	fn tools_ui(&mut self, ctx: &Context) {
