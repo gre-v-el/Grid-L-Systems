@@ -1,7 +1,8 @@
 use crate::tabs::{Tab, EditTab, EvolveTab, GrowTab};
-use egui_macroquad::{egui, macroquad::prelude::*};
+use egui_macroquad::egui;
 
 pub struct State {
+	is_ui_using_mouse: bool,
 	current_tab: usize,
 	tabs: [Box<dyn Tab>; 3],
 }
@@ -9,6 +10,7 @@ pub struct State {
 impl State {
 	pub fn new() -> Self {
 		Self {
+			is_ui_using_mouse: false,
 			current_tab: 0,
 			tabs: [
 				Box::new(EditTab::new()),
@@ -21,7 +23,7 @@ impl State {
 	pub fn frame(&mut self) {
 
 		let tab = self.tabs[self.current_tab].as_mut();
-		tab.update();
+		tab.frame(!self.is_ui_using_mouse);
 
 		egui_macroquad::ui(|ctx| {
 			egui::TopBottomPanel::top("tabs").exact_height(20.0).show(ctx, |ui| {
@@ -33,10 +35,10 @@ impl State {
 			});
 
 			tab.draw_ui(&ctx);
-		});	
+
+			self.is_ui_using_mouse = ctx.is_pointer_over_area();
+		});
 		egui_macroquad::draw();
 
-		tab.set_camera();
-		tab.draw_scene();
 	}
 }

@@ -130,7 +130,50 @@ impl Grid {
 		pos[1] < self.height
 	}
 
+	pub fn insert_cell(&mut self, cell: Cell, pos: [isize; 2]) {
+		let top =    self.height - self.shift[1] - 1;
+		let right =  self.width  - self.shift[0] - 1;
+		let bottom = self.shift[1];
+		let left =   self.shift[0];
 
+		let expand_top =    isize::max(0,  pos[1] - top as isize   ) as usize;
+		let expand_right =  isize::max(0,  pos[0] - right as isize ) as usize;
+		let expand_bottom = isize::max(0, -pos[1] - bottom as isize) as usize;
+		let expand_left =   isize::max(0, -pos[0] - left as isize  ) as usize;
+
+		if expand_top + expand_right + expand_bottom + expand_left > 0 {
+			let new_width = expand_left + left + 1 + right + expand_right;
+			let new_height = expand_top + top + 1 + bottom + expand_bottom;
+			let new_shift = [self.shift[0] + expand_left, self.shift[1] + expand_bottom];
+			
+			let mut new_contents = Vec::with_capacity(new_width * new_height);
+
+			for y in 0..new_height {
+				for x in 0..new_width {
+					if x < expand_left   || x >= new_width - expand_right ||
+					   y < expand_bottom || y >= new_height - expand_top {
+						new_contents.push(Cell::Empty);
+					}
+					else {
+						new_contents.push(self.at_raw([x - expand_left, y - expand_bottom]));
+					}
+				}
+			}
+
+			self.contents = new_contents;
+			self.width = new_width;
+			self.height = new_height;
+			self.shift = new_shift;
+		}
+
+		match cell {
+			Cell::Empty => {},
+			cell => {
+				let i = self.pos_to_index(pos);
+				self.contents[i] = cell;
+			},
+		}
+	}
 
 	pub fn insert(&mut self, other: &Grid, pos: [isize; 2], other_dir: Direction) {
 
@@ -329,6 +372,10 @@ impl Grid {
 
 	pub fn height(&self) -> usize {
 		self.height
+	}
+
+	pub fn shift(&self) -> [usize; 2] {
+		self.shift
 	}
 
 	pub fn score_simmilarity(&self, other: &Self) -> f32 {

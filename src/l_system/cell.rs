@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use rand::{rngs::ThreadRng, Rng};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Cell {
 	Stem(u8, Direction),
 	Passive,
@@ -39,7 +39,7 @@ impl Cell {
 	}
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Direction {
 	UP, LEFT, DOWN, RIGHT
 }
