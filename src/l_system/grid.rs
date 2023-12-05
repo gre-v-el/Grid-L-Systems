@@ -131,6 +131,8 @@ impl Grid {
 	}
 
 	pub fn insert_cell(&mut self, cell: Cell, pos: [isize; 2]) {
+		if cell.same_type(&Cell::Empty) && !self.contains(pos) { return; }
+
 		let top =    self.height - self.shift[1] - 1;
 		let right =  self.width  - self.shift[0] - 1;
 		let bottom = self.shift[1];
@@ -166,13 +168,8 @@ impl Grid {
 			self.shift = new_shift;
 		}
 
-		match cell {
-			Cell::Empty => {},
-			cell => {
-				let i = self.pos_to_index(pos);
-				self.contents[i] = cell;
-			},
-		}
+		let i = self.pos_to_index(pos);
+		self.contents[i] = cell;
 	}
 
 	pub fn insert(&mut self, other: &Grid, pos: [isize; 2], other_dir: Direction) {
