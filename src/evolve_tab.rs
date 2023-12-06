@@ -31,4 +31,12 @@ impl Tab for EvolveTab {
 			}
 		);
     }
+
+    fn send_to(&mut self) -> Option<(usize, Vec<soft_evolution::l_system::grid::Grid>)> {
+        None
+    }
+
+    fn receive(&mut self, _system: Vec<soft_evolution::l_system::grid::Grid>) {
+        
+    }
 }

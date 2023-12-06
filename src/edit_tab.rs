@@ -1,11 +1,17 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Rect, vec2, pos2, Stroke, Layout, Align, Label, RichText, Color32, Button, WidgetText, TextStyle, ScrollArea}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Rect, vec2, pos2, Stroke, Layout, Align, Label, RichText, Color32, Button, ScrollArea}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, cell_col, arr_to_col}, state::Tab};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, cell_col, arr_to_col}, state::Tab, ui::centered_button};
 
 #[derive(PartialEq)]
 enum EditTool {
 	Draw, Erase // Rotate
+}
+
+#[derive(PartialEq, Eq)]
+enum CellType {
+	Stem,
+	Passive,
 }
 
 pub struct EditTab {
@@ -13,7 +19,10 @@ pub struct EditTab {
 	current_rule: usize,
 	l_rules: Vec<Grid>,
 	tool: EditTool,
-	draw_cell: Cell,
+	draw_cell: CellType,
+	draw_stem_type: u8,
+	draw_stem_dir: Direction,
+	send: Option<(usize, Vec<Grid>)>
 }
 
 impl EditTab {
@@ -71,21 +80,8 @@ impl EditTab {
 					}
 	
 					ui.add_space(7.5);
-	
-					let (rect, response) = ui.allocate_exact_size(Vec2::new(150.0, 25.0), Sense::click());
-	
-					let visuals = ui.style().interact(&response);
-					ui.painter().rect(rect, visuals.rounding, visuals.bg_fill, visuals.bg_stroke);
-	
-					let text = WidgetText::from("\u{271A}");
-	
-					let text = text.into_galley(ui, None, 150.0, TextStyle::Button);
-					let text_pos = Layout::top_down(Align::Center)
-						.align_size_within_rect(text.size(), rect.shrink(5.0))
-						.min;
-					text.paint_with_visuals(ui.painter(), text_pos, &visuals);
-	
-					if response.clicked() {
+					
+					if centered_button(ui, Vec2::new(150.0, 25.0), "\u{271A}").clicked() {
 						self.l_rules.push(Grid::single(Cell::Passive));
 					}
 
@@ -94,9 +90,10 @@ impl EditTab {
 			});
 		
 		if let Some(i) = to_delete {
-			if i < self.l_rules.len() {
-				self.l_rules.remove(i);
+			if self.current_rule >= i {
+				self.current_rule -= 1;
 			}
+			self.l_rules.remove(i);
 		}
 	}
 
@@ -105,11 +102,6 @@ impl EditTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
-				
-				if ui.button("Optimize").clicked() {
-					self.l_rules[self.current_rule].contract_empty();
-				}
-				ui.separator();
 
 				ui.horizontal(|ui| {
 					ui.selectable_value(&mut self.tool, EditTool::Draw, "Draw");
@@ -118,27 +110,36 @@ impl EditTab {
 
 				ui.separator();
 				
-				if self.tool == EditTool::Draw {
-					if ui.radio(self.draw_cell.same_type(&Cell::Passive), "Passive").clicked() {
-						self.draw_cell = Cell::Passive;
+				ui.add_visible_ui(self.tool == EditTool::Draw, |ui| {
+					if ui.radio(self.draw_cell == CellType::Passive, "Passive").clicked() {
+						self.draw_cell = CellType::Passive;
 					}
-					if ui.radio(self.draw_cell.same_type(&Cell::Stem(0, Direction::UP)), "Stem").clicked() {
-						self.draw_cell = Cell::Stem(0, Direction::UP);
+					if ui.radio(self.draw_cell == CellType::Stem, "Stem").clicked() {
+						self.draw_cell = CellType::Stem;
 					}
 					ui.separator();
 
-					if let Cell::Stem(n, dir) = &mut self.draw_cell {
+					ui.add_visible_ui(self.draw_cell == CellType::Stem, |ui| {
 						ui.horizontal(|ui| {
-							ui.add(DragValue::new(n).speed(0.1).clamp_range(0..=255));
+							ui.add(DragValue::new(&mut self.draw_stem_type).speed(0.1).clamp_range(0..=255));
 							ui.label("Stem cell type");
 						});
-						ui.radio_value(dir, Direction::UP, "Up");
-						ui.radio_value(dir, Direction::RIGHT, "Right");
-						ui.radio_value(dir, Direction::DOWN, "Down");
-						ui.radio_value(dir, Direction::LEFT, "Left");
+						ui.radio_value(&mut self.draw_stem_dir, Direction::UP, "Up");
+						ui.radio_value(&mut self.draw_stem_dir, Direction::RIGHT, "Right");
+						ui.radio_value(&mut self.draw_stem_dir, Direction::DOWN, "Down");
+						ui.radio_value(&mut self.draw_stem_dir, Direction::LEFT, "Left");
 						
 						ui.separator();
-					}
+					});
+				});
+
+				ui.separator();
+				
+				if centered_button(ui, vec2(150.0, 25.0), "Optimize").clicked() {
+					self.l_rules[self.current_rule].contract_empty();
+				}
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
+					self.send = Some((2, self.l_rules.clone()));
 				}
 			});
     }
@@ -153,8 +154,11 @@ impl Tab for EditTab {
 				Grid::new(3, 3, vec![Cell::Empty, Cell::Empty, Cell::Empty, Cell::Empty, Cell::Stem(0, Direction::UP), Cell::Empty, Cell::Empty, Cell::Empty, Cell::Empty], [1, 1]),
 			],
 			tool: EditTool::Draw,
-			draw_cell: Cell::Passive,
+			draw_stem_type: 0,
+			draw_stem_dir: Direction::UP,
+			draw_cell: CellType::Passive,
 			current_rule: 0,
+			send: None,
 		}
     }
 
@@ -167,12 +171,13 @@ impl Tab for EditTab {
 			
 			let rule = &mut self.l_rules[self.current_rule];
 			
-			if rule.contains(pos) || !self.draw_cell.same_type(&Cell::Empty) {
-				rule.insert_cell(match self.tool {
-					EditTool::Draw => self.draw_cell,
-					EditTool::Erase => Cell::Empty,
-				}, pos);
-			}
+			rule.insert_cell(match self.tool {
+				EditTool::Draw => match self.draw_cell {
+					CellType::Stem => Cell::Stem(self.draw_stem_type, self.draw_stem_dir),
+					CellType::Passive => Cell::Passive,
+				},
+				EditTool::Erase => Cell::Empty,
+			}, pos);
 		}
 
 		
@@ -186,5 +191,18 @@ impl Tab for EditTab {
 	fn draw_ui(&mut self, ctx: &Context) {
 		self.rules_ui(ctx);
 		self.tools_ui(ctx);
+	}
+
+	fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
+		if let Some((i, grid)) = self.send.take() {
+			self.send = None;
+
+			return Some((i, grid));
+		}
+		None
+	}
+
+	fn receive(&mut self, _system: Vec<Grid>) {
+		
 	}
 }

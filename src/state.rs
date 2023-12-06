@@ -1,4 +1,5 @@
 use egui_macroquad::egui::{self, Context};
+use soft_evolution::l_system::grid::Grid;
 
 use crate::{edit_tab::EditTab, evolve_tab::EvolveTab, grow_tab::GrowTab};
 
@@ -6,6 +7,8 @@ pub trait Tab {
 	fn new() -> Self where Self: Sized;
 	fn frame(&mut self, can_use_mouse: bool);
 	fn draw_ui(&mut self, ctx: &Context);
+	fn send_to(&mut self) -> Option<(usize, Vec<Grid>)>;
+	fn receive(&mut self, system: Vec<Grid>);
 }
 
 
@@ -49,5 +52,9 @@ impl State {
 		});
 		egui_macroquad::draw();
 
+		if let Some((i, grid)) = tab.send_to() {
+			self.current_tab = i;
+			self.tabs[self.current_tab].receive(grid);
+		}
 	}
 }
