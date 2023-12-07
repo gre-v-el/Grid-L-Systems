@@ -69,12 +69,12 @@ impl Grid {
 		}
 	}
 
-	pub fn vertical(contents: &[Cell], shift: usize) -> Self {
+	pub fn vertical(contents: Vec<Cell>, shift: usize) -> Self {
 		assert!(contents.len() > shift);
 		Self {
 			width: 1,
 			height: contents.len(),
-			contents: Vec::from(contents),
+			contents: contents,
 			shift: [0, shift],
 		}
 	}

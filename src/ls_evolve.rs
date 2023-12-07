@@ -30,6 +30,15 @@ pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
 #[derive(Clone)]
 pub struct LS(pub LSystem);
 
+impl LS {
+	#[allow(dead_code)]
+	pub fn new(rules: Vec<Grid>) -> Self {
+		Self(
+			LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), rules)
+		)
+	}
+}
+
 impl Evolve for LS {
     fn new_random(rng: &mut ThreadRng) -> Self {
 		let stem_types = rng.gen_range(2..=5u8);

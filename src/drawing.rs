@@ -60,6 +60,10 @@ pub fn arr_to_col(col: [f32; 4]) -> Color32 {
 	)
 }
 
+pub fn pixel_width(camera: &Camera2D) -> f32 {
+	(camera.screen_to_world((0.0, 1.0).into()) - camera.screen_to_world((0.0, 0.0).into())).y
+}
+
 pub fn draw_grid_lines(grid: &Grid, width: f32) {
 	let shift = grid.shift();
 	let shift = [shift[0] as f32, shift[1] as f32];
