@@ -1,7 +1,7 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, Sense, Rect, vec2, pos2, Stroke, Layout, Align, Label, RichText, Color32, Button, ScrollArea}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, cell_col, arr_to_col}, state::Tab, ui::centered_button};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid}, state::Tab, ui::{centered_button, rule_button}};
 
 #[derive(PartialEq)]
 enum EditTool {
@@ -36,52 +36,18 @@ impl EditTab {
 			.show(ctx, |ui| {
 				ScrollArea::vertical().show(ui, |ui| {
 					for (i, rule) in self.l_rules.iter().enumerate() {
-						let (rect, response) = ui.allocate_exact_size(Vec2::new(150.0, 40.0), Sense::click());
-	
-						let visuals = ui.style().interact_selectable(&response, self.current_rule==i);
-						ui.painter().rect(rect, visuals.rounding, visuals.bg_fill, visuals.bg_stroke);
-	
-						if response.clicked() {
+						let (big_resp, small_resp) = rule_button(ui, rule, i, self.l_rules.len(), self.current_rule == i);
+						if big_resp.clicked() {
 							self.current_rule = i;
 						}
-	
-						let mut ui = ui.child_ui(rect, Layout::left_to_right(Align::Center));
-						ui.add_space(5.0);
-						ui.add(Label::new(RichText::new(format!("rule {i}")).color(Color32::WHITE)));
-	
-						if ui.add_enabled(self.l_rules.len() > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0))).clicked() {
+						if small_resp.clicked() {
 							to_delete = Some(i);
-						}
-	
-						let mut rect = ui.available_rect_before_wrap().shrink(5.0);
-						
-						let aspect = rule.width() as f32 / rule.height() as f32;
-						if aspect > rect.aspect_ratio() {
-							rect = rect.shrink2(vec2(0.0, (rect.height() - rect.width() / aspect)*0.5));
-						}
-						else {
-							rect = rect.shrink2(vec2((rect.width() - rect.height() * aspect)*0.5, 0.0));
-						}
-						
-						let scale = rect.width() / rule.width() as f32;
-						for ([x, y], cell) in rule {
-							if cell.same_type(&Cell::Empty) { continue; }
-							let [x, y] = rule.pos_to_raw_pos([x, y]);
-							ui.painter().rect(
-								Rect::from_min_size(
-									pos2(x as f32 * scale, (rule.height() - 1 - y) as f32 * scale) + rect.min.to_vec2(), 
-									vec2(scale, scale)), 
-									0.0, 
-									arr_to_col(cell_col(&cell)
-								), 
-								Stroke::NONE
-							);
 						}
 					}
 	
 					ui.add_space(7.5);
 					
-					if centered_button(ui, Vec2::new(150.0, 25.0), "\u{271A}").clicked() {
+					if centered_button(ui, Vec2::new(150.0, 25.0), "\u{2795}").clicked() {
 						self.l_rules.push(Grid::single(Cell::Passive));
 					}
 
@@ -102,7 +68,6 @@ impl EditTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
-
 				ui.horizontal(|ui| {
 					ui.selectable_value(&mut self.tool, EditTool::Draw, "Draw");
 					ui.selectable_value(&mut self.tool, EditTool::Erase, "Erase");
@@ -111,15 +76,23 @@ impl EditTab {
 				ui.separator();
 				
 				ui.add_visible_ui(self.tool == EditTool::Draw, |ui| {
-					if ui.radio(self.draw_cell == CellType::Passive, "Passive").clicked() {
-						self.draw_cell = CellType::Passive;
-					}
-					if ui.radio(self.draw_cell == CellType::Stem, "Stem").clicked() {
-						self.draw_cell = CellType::Stem;
-					}
+					ui.radio_value(&mut self.draw_cell, CellType::Passive, "Passive");
+					ui.radio_value(&mut self.draw_cell, CellType::Stem, "Stem");
+
 					ui.separator();
 
 					ui.add_visible_ui(self.draw_cell == CellType::Stem, |ui| {
+						ui.horizontal(|ui| {
+							let tmp = ui.spacing().item_spacing;
+							ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+							if ui.add_enabled(self.draw_stem_type < 255, Button::new("\u{2795}")).clicked() { 
+								self.draw_stem_type += 1;
+							}
+							if ui.add_enabled(self.draw_stem_type > 0, Button::new("\u{2796}")).clicked() { 
+								self.draw_stem_type -= 1;
+							}
+							ui.spacing_mut().item_spacing = tmp;
+						});
 						ui.horizontal(|ui| {
 							ui.add(DragValue::new(&mut self.draw_stem_type).speed(0.1).clamp_range(0..=255));
 							ui.label("Stem cell type");
@@ -179,7 +152,6 @@ impl Tab for EditTab {
 				EditTool::Erase => Cell::Empty,
 			}, pos);
 		}
-
 		
         set_camera(self.controls.camera());
 		
