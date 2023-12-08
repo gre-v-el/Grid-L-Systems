@@ -97,3 +97,19 @@ impl LSystem {
 		&self.stem_queue
 	}
 }
+
+pub fn is_valid(rules: &[Grid]) -> bool {
+	let max_stem = (rules.len() - 1) as u8;
+
+	for rule in rules {
+		for (_, cell) in rule {
+			if let Cell::Stem(n, _) = cell {
+				if n > max_stem {
+					return false;
+				}
+			}
+		}
+	}
+
+	true
+}

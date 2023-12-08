@@ -64,21 +64,21 @@ pub fn pixel_width(camera: &Camera2D) -> f32 {
 	(camera.screen_to_world((0.0, 1.0).into()) - camera.screen_to_world((0.0, 0.0).into())).y
 }
 
-pub fn draw_grid_lines(grid: &Grid, width: f32) {
+pub fn draw_grid_lines(grid: &Grid, pixel: f32) {
 	let shift = grid.shift();
 	let shift = [shift[0] as f32, shift[1] as f32];
 
 	for x in 0..=grid.width() {
 		let x = x as f32;
-		draw_line(x - shift[0], shift[1] + 1.0, x - shift[0], shift[1] - grid.height() as f32 + 1.0, width, GRID_COL);
+		draw_line(x - shift[0], shift[1] + 1.0, x - shift[0], shift[1] - grid.height() as f32 + 1.0, pixel, GRID_COL);
 	}
 	for y in 0..=grid.height() {
 		let y = y as f32;
-		draw_line(-shift[0], -y + shift[1] + 1.0, grid.width() as f32 - shift[0], -y + shift[1] as f32 + 1.0, width, GRID_COL);
+		draw_line(-shift[0], -y + shift[1] + 1.0, grid.width() as f32 - shift[0], -y + shift[1] as f32 + 1.0, pixel, GRID_COL);
 	}
 
-	draw_line(0.5, shift[1] + 1.0, 0.5, shift[1] - grid.height() as f32 + 1.0, width * 2.0, Color::new(0.0, 0.4, 0.0, 1.0));
-	draw_line(-shift[0], 0.5, -shift[0] + grid.width() as f32, 0.5, width * 2.0, Color::new(0.4, 0.0, 0.0, 1.0));
+	draw_line(0.5, shift[1] + 1.0, 0.5, shift[1] - grid.height() as f32 + 1.0, pixel * 2.0, Color::new(0.0, 0.4, 0.0, 1.0));
+	draw_line(-shift[0], 0.5, -shift[0] + grid.width() as f32, 0.5, pixel * 2.0, Color::new(0.4, 0.0, 0.0, 1.0));
 }
 
 pub fn draw_grid(grid: &Grid) {
@@ -104,4 +104,8 @@ pub fn draw_grid(grid: &Grid) {
 			Cell::Empty => {},
 		};
 	}
+}
+
+pub fn draw_grid_origin(size: f32) {
+	draw_circle(0.5, 0.5, size, BLACK);
 }

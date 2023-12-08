@@ -1,7 +1,7 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea}};
-use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea, Color32, Layout, Align}};
+use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}, is_valid};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width}, state::Tab, ui::{centered_button, rule_button}};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_origin}, state::Tab, ui::{centered_button, rule_button}};
 
 #[derive(PartialEq)]
 enum EditTool {
@@ -22,7 +22,8 @@ pub struct EditTab {
 	draw_cell: CellType,
 	draw_stem_type: u8,
 	draw_stem_dir: Direction,
-	send: Option<(usize, Vec<Grid>)>
+	send: Option<(usize, Vec<Grid>)>,
+	send_error: bool,
 }
 
 impl EditTab {
@@ -80,23 +81,30 @@ impl EditTab {
 					ui.radio_value(&mut self.draw_cell, CellType::Stem, "Stem");
 
 					ui.separator();
-
+					
 					ui.add_visible_ui(self.draw_cell == CellType::Stem, |ui| {
-						ui.horizontal(|ui| {
-							let tmp = ui.spacing().item_spacing;
-							ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
-							if ui.add_enabled(self.draw_stem_type < 255, Button::new("\u{2795}")).clicked() { 
-								self.draw_stem_type += 1;
-							}
-							if ui.add_enabled(self.draw_stem_type > 0, Button::new("\u{2796}")).clicked() { 
-								self.draw_stem_type -= 1;
-							}
-							ui.spacing_mut().item_spacing = tmp;
-						});
-						ui.horizontal(|ui| {
-							ui.add(DragValue::new(&mut self.draw_stem_type).speed(0.1).clamp_range(0..=255));
+						ui.allocate_ui_with_layout(vec2(0.0, 0.0), Layout::left_to_right(Align::Center), |ui| {
+							ui.vertical(|ui| {
+								ui.horizontal(|ui| {
+									let tmp = ui.spacing().item_spacing;
+									ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
+									if ui.add_enabled(self.draw_stem_type > 0, Button::new("\u{2796}")).clicked() { 
+										self.draw_stem_type -= 1;
+									}
+									if ui.add_enabled(self.draw_stem_type < 255, Button::new("\u{2795}")).clicked() { 
+										self.draw_stem_type += 1;
+									}
+									ui.spacing_mut().item_spacing = tmp;
+								});
+								ui.horizontal(|ui| {
+									ui.add(DragValue::new(&mut self.draw_stem_type).speed(0.1).clamp_range(0..=255));
+								});
+							});
 							ui.label("Stem cell type");
 						});
+
+						ui.add_space(10.0);
+
 						ui.radio_value(&mut self.draw_stem_dir, Direction::UP, "Up");
 						ui.radio_value(&mut self.draw_stem_dir, Direction::RIGHT, "Right");
 						ui.radio_value(&mut self.draw_stem_dir, Direction::DOWN, "Down");
@@ -112,7 +120,15 @@ impl EditTab {
 					self.l_rules[self.current_rule].contract_empty();
 				}
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
-					self.send = Some((2, self.l_rules.clone()));
+					if is_valid(&self.l_rules) {
+						self.send = Some((2, self.l_rules.clone()));
+					}
+					else {
+						self.send_error = true;
+					}
+				}
+				if self.send_error {
+					ui.colored_label(Color32::RED, "Cannot send, invalid stem cells.");
 				}
 			});
     }
@@ -123,8 +139,7 @@ impl Tab for EditTab {
         Self {
 			controls: Controls::new(),
 			l_rules: vec![
-				Grid::new(3, 3, vec![Cell::Empty, Cell::Empty, Cell::Empty, Cell::Empty, Cell::Stem(0, Direction::UP), Cell::Empty, Cell::Empty, Cell::Empty, Cell::Empty], [1, 1]),
-				Grid::new(3, 3, vec![Cell::Empty, Cell::Empty, Cell::Empty, Cell::Empty, Cell::Stem(0, Direction::UP), Cell::Empty, Cell::Empty, Cell::Empty, Cell::Empty], [1, 1]),
+				Grid::vertical(vec![Cell::Stem(0, Direction::RIGHT), Cell::Passive, Cell::Passive], 0)
 			],
 			tool: EditTool::Draw,
 			draw_stem_type: 0,
@@ -132,6 +147,7 @@ impl Tab for EditTab {
 			draw_cell: CellType::Passive,
 			current_rule: 0,
 			send: None,
+			send_error: false,
 		}
     }
 
@@ -139,6 +155,8 @@ impl Tab for EditTab {
 		self.controls.update(can_use_mouse);
 
 		if is_mouse_button_down(MouseButton::Left) && can_use_mouse {
+			self.send_error = false;
+
 			let pos: [i32; 2] = self.controls.mouse_world.floor().as_ivec2().into();
 			let pos = [pos[0] as isize, -pos[1] as isize];
 			
@@ -155,8 +173,10 @@ impl Tab for EditTab {
 		
         set_camera(self.controls.camera());
 		
-		draw_grid_lines(&self.l_rules[self.current_rule], pixel_width(self.controls.camera()));
+		let pixel = pixel_width(self.controls.camera());
+		draw_grid_lines(&self.l_rules[self.current_rule], pixel);
 		draw_grid(&self.l_rules[self.current_rule]);    
+		draw_grid_origin(4.0*pixel)
 	}
 
 	fn draw_ui(&mut self, ctx: &Context) {

@@ -55,9 +55,7 @@ async fn main() {
 
 
 /*
-validate on send from edit to grow
-indicate middle cell by a little dot
-checkbox - show backgroudn grid
 show queue
 grow animation
+better arrows
 */

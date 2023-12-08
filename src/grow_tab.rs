@@ -1,7 +1,7 @@
 use egui_macroquad::{macroquad::prelude::*, egui::{Context, SidePanel, panel::Side, vec2, Slider}};
 use soft_evolution::l_system::{grid::Grid, LSystem, cell::{Direction, Cell}};
 
-use crate::{controls::Controls, state::Tab, drawing::{draw_grid_lines, pixel_width, draw_grid}, ui::centered_button};
+use crate::{controls::Controls, state::Tab, drawing::{draw_grid_lines, pixel_width, draw_grid, draw_grid_origin}, ui::centered_button};
 
 pub struct GrowTab {
 	controls: Controls,
@@ -9,6 +9,7 @@ pub struct GrowTab {
 	running: bool,
 	step_delay: f64,
 	last_update: f64,
+	show_grid: bool,
 }
 
 impl Tab for GrowTab {
@@ -16,11 +17,12 @@ impl Tab for GrowTab {
         Self {
 			controls: Controls::new(),
 			system: LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), vec![
-				Grid::vertical(vec![Cell::Passive, Cell::Passive, Cell::Stem(0, Direction::RIGHT)], 2)
+				Grid::single(Cell::Stem(0, Direction::UP))
 			]),
 			running: false,
 			step_delay: 1.0,
 			last_update: -1.0,
+			show_grid: false,
 		}
     }
 
@@ -28,9 +30,14 @@ impl Tab for GrowTab {
 		self.controls.update(can_use_mouse);
 		set_camera(self.controls.camera());
 
-
-		draw_grid_lines(self.system.state(), pixel_width(self.controls.camera()));
+		let pixel = pixel_width(self.controls.camera());
+		if self.show_grid {
+			draw_grid_lines(self.system.state(), pixel);
+		}
 		draw_grid(self.system.state());
+		if self.show_grid {
+			draw_grid_origin(4.0*pixel);
+		}
 
 		if self.running && get_time() - self.step_delay > self.last_update {
 			self.last_update = get_time();
@@ -63,6 +70,10 @@ impl Tab for GrowTab {
 				ui.add(Slider::new(&mut val, 0.0..=1.0).show_value(false));
 
 				self.step_delay = (1.0 - val).powf(5.0) * 2.0;
+			
+				ui.separator();
+
+				ui.checkbox(&mut self.show_grid, "Show Grid");
 			}
 		);
     }
