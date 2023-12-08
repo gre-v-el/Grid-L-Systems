@@ -222,7 +222,7 @@ impl Grid {
 			match cell {
 				Cell::Empty => {},
 				cell => {
-					let [x, y] = other_dir.rotate_coords(x, y);
+					let [x, y] = other_dir.rotate_coords([x, y]);
 					let i = self.pos_to_index([x + pos[0], y + pos[1]]);
 					self.contents[i] = other_dir.rotate_cell(cell);
 				},

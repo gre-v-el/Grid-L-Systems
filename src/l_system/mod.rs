@@ -52,7 +52,7 @@ impl LSystem {
 			for (other_pos, cell) in to {
 				match cell {
 					Cell::Stem(_, _) => {
-						let other_pos = stem_dir.rotate_coords(other_pos[0], other_pos[1]);
+						let other_pos = stem_dir.rotate_coords([other_pos[0], other_pos[1]]);
 						let state_pos = to.pos_to_other_pos(other_pos, [-pos[0], -pos[1]]);
 						self.stem_queue.push_back(state_pos);
 					}

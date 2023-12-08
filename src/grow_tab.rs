@@ -1,7 +1,7 @@
 use egui_macroquad::{macroquad::prelude::*, egui::{Context, SidePanel, panel::Side, vec2, Slider}};
 use soft_evolution::l_system::{grid::Grid, LSystem, cell::{Direction, Cell}};
 
-use crate::{controls::Controls, state::Tab, drawing::{draw_grid_lines, pixel_width, draw_grid, draw_grid_origin}, ui::centered_button};
+use crate::{controls::Controls, state::Tab, drawing::{draw_grid_lines, pixel_width, draw_grid, draw_grid_axes}, ui::centered_button};
 
 pub struct GrowTab {
 	controls: Controls,
@@ -36,7 +36,7 @@ impl Tab for GrowTab {
 		}
 		draw_grid(self.system.state());
 		if self.show_grid {
-			draw_grid_origin(4.0*pixel);
+			draw_grid_axes(self.system.state(), pixel);
 		}
 
 		if self.running && get_time() - self.step_delay > self.last_update {

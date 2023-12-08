@@ -55,7 +55,7 @@ async fn main() {
 
 
 /*
-show queue
 grow animation
-better arrows
+evolve tab
+split the project into workspaces
 */

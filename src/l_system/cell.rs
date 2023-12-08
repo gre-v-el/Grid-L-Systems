@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::Neg};
 
 use rand::{rngs::ThreadRng, Rng};
 
@@ -64,12 +64,14 @@ impl Direction {
 		}
 	}
 	
-	pub fn rotate_coords(&self, x: isize, y: isize) -> [isize; 2] {
+	pub fn rotate_coords<T>(&self, v: [T; 2]) -> [T; 2]
+	where T: Copy + Neg<Output = T>
+	{
 		match self {
-			Direction::UP => [x, y],
-			Direction::LEFT => [-y, x],
-			Direction::DOWN => [-x, -y],
-			Direction::RIGHT => [y, -x],
+			Direction::UP => [v[0], v[1]],
+			Direction::LEFT => [-v[1], v[0]],
+			Direction::DOWN => [-v[0], -v[1]],
+			Direction::RIGHT => [v[1], -v[0]],
 		}
 	}
 

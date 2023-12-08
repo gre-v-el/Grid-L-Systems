@@ -1,7 +1,7 @@
 use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea, Color32, Layout, Align}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}, is_valid};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_origin}, state::Tab, ui::{centered_button, rule_button}};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button}};
 
 #[derive(PartialEq)]
 enum EditTool {
@@ -175,8 +175,8 @@ impl Tab for EditTab {
 		
 		let pixel = pixel_width(self.controls.camera());
 		draw_grid_lines(&self.l_rules[self.current_rule], pixel);
-		draw_grid(&self.l_rules[self.current_rule]);    
-		draw_grid_origin(4.0*pixel)
+		draw_grid(&self.l_rules[self.current_rule]);
+		draw_grid_axes(&self.l_rules[self.current_rule], pixel);
 	}
 
 	fn draw_ui(&mut self, ctx: &Context) {
