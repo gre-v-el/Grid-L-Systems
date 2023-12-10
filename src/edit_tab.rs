@@ -57,7 +57,7 @@ impl EditTab {
 			});
 		
 		if let Some(i) = to_delete {
-			if self.current_rule >= i {
+			if self.current_rule >= i && self.current_rule != 0 {
 				self.current_rule -= 1;
 			}
 			self.l_rules.remove(i);

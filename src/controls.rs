@@ -63,9 +63,9 @@ impl Controls {
 				self.target.target -= self.mouse_world - self.last_mouse_world;
 			}
 			
-			self.camera.target = lerp(self.camera.target..=self.target.target, 1.0 - 0.1f32.powf(10.0*get_frame_time()));
-			self.camera.zoom =   lerp(self.camera.zoom..=self.target.zoom,   1.0 - 0.1f32.powf(10.0*get_frame_time()));
 		}
+		self.camera.target = lerp(self.camera.target..=self.target.target, 1.0 - 0.1f32.powf(10.0*get_frame_time()));
+		self.camera.zoom =   lerp(self.camera.zoom..=self.target.zoom,   1.0 - 0.1f32.powf(10.0*get_frame_time()));
 
 		self.drag = self.mouse_world - self.last_mouse_world;
         self.last_mouse_world = self.target.screen_to_world(mouse_screen);

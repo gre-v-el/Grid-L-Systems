@@ -1,28 +1,63 @@
 use egui_macroquad::{macroquad::prelude::*, egui::{Context, SidePanel, panel::Side, vec2, Slider}};
 use soft_evolution::l_system::{grid::Grid, LSystem, cell::{Direction, Cell}};
 
-use crate::{controls::Controls, state::Tab, drawing::{draw_grid_lines, pixel_width, draw_grid, draw_grid_axes}, ui::centered_button};
+use crate::{controls::Controls, state::Tab, drawing::{draw_grid_lines, pixel_width, draw_grid_axes, draw_grid_animated, draw_grid}, ui::centered_button};
 
 pub struct GrowTab {
 	controls: Controls,
+	
 	system: LSystem,
+	prev_system: Grid,
+	animated_rule: usize,
+	animated_from: Option<([isize; 2], Direction)>,
+
 	running: bool,
 	step_delay: f64,
 	last_update: f64,
+	
 	show_grid: bool,
+	animate: bool,
+}
+
+impl GrowTab {
+	fn step_system(&mut self) {
+		self.last_update = get_time();
+		self.prev_system = self.system.state().clone();
+		if let Some(pos) = self.system.queue().front() {
+			let cell = self.system.state().at(*pos);
+			if let Cell::Stem(n, dir) = cell {
+				self.animated_from = Some((*pos, dir));
+				self.animated_rule = n as usize;
+			}
+			else {
+				panic!();
+			}
+		}
+		else {
+			self.animated_from = None;
+		}
+		self.system.try_step();
+	}
 }
 
 impl Tab for GrowTab {
     fn new() -> Self {
         Self {
 			controls: Controls::new(),
+
 			system: LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), vec![
 				Grid::single(Cell::Stem(0, Direction::UP))
 			]),
+			prev_system: Grid::single(Cell::Empty),
+			animated_rule: 0,
+			animated_from: None,
+
 			running: false,
 			step_delay: 1.0,
 			last_update: -1.0,
+
 			show_grid: false,
+			animate: true,
 		}
     }
 
@@ -34,14 +69,31 @@ impl Tab for GrowTab {
 		if self.show_grid {
 			draw_grid_lines(self.system.state(), pixel);
 		}
-		draw_grid(self.system.state());
+
+		
+		if !self.animate {
+			draw_grid(self.system.state());
+		}
+		else if let Some((pos, dir)) = self.animated_from {
+			let mut t = (get_time() - self.last_update) as f32 / self.step_delay as f32;
+			if t > 1.0 { 
+				t = 1.0;
+				self.animated_from = None;
+			}
+			draw_grid_animated(self.system.state(), &self.prev_system, &self.system.rules()[self.animated_rule], pos, dir, t);
+			
+		}
+		else {
+			draw_grid(self.system.state());
+		}
+
+
 		if self.show_grid {
 			draw_grid_axes(self.system.state(), pixel);
 		}
 
 		if self.running && get_time() - self.step_delay > self.last_update {
-			self.last_update = get_time();
-			self.system.try_step();
+			self.step_system();
 		}
 	}
 
@@ -52,7 +104,7 @@ impl Tab for GrowTab {
 			.show(ctx, |ui| {
 				ui.add_enabled_ui(!self.running, |ui| {
 					if centered_button(ui, vec2(150.0, 25.0), "Step").clicked() {
-						self.system.try_step();
+						self.step_system();		
 					}
 				});
 
@@ -74,6 +126,7 @@ impl Tab for GrowTab {
 				ui.separator();
 
 				ui.checkbox(&mut self.show_grid, "Show Grid");
+				ui.checkbox(&mut self.animate, "Animate");
 			}
 		);
     }

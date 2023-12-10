@@ -74,6 +74,19 @@ impl Direction {
 			Direction::RIGHT => [v[1], -v[0]],
 		}
 	}
+	
+	pub fn unrotate_coords<T>(&self, v: [T; 2]) -> [T; 2]
+	where T: Copy + Neg<Output = T>
+	{
+		match self {
+			Direction::UP => [v[0], v[1]],
+			Direction::RIGHT => [-v[1], v[0]],
+			Direction::DOWN => [-v[0], -v[1]],
+			Direction::LEFT => [v[1], -v[0]],
+		}
+	}
+
+	
 
 	pub fn rotate_cell(&self, cell: Cell) -> Cell {
 		match cell {

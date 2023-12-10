@@ -55,7 +55,9 @@ async fn main() {
 
 
 /*
-grow animation
 evolve tab
 split the project into workspaces
+rotate rule
+duplicate rule
+save to file
 */
