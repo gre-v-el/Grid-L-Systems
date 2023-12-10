@@ -115,10 +115,11 @@ impl EditTab {
 				});
 
 				ui.separator();
-				
 				if centered_button(ui, vec2(150.0, 25.0), "Optimize").clicked() {
 					self.l_rules[self.current_rule].contract_empty();
 				}
+
+				ui.separator();
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
 					if is_valid(&self.l_rules) {
 						self.send = Some((2, self.l_rules.clone()));
@@ -127,6 +128,7 @@ impl EditTab {
 						self.send_error = true;
 					}
 				}
+
 				if self.send_error {
 					ui.colored_label(Color32::RED, "Cannot send, invalid stem cells.");
 				}

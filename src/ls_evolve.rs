@@ -26,6 +26,7 @@ pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
 pub struct LS(pub LSystem);
 
 impl LS {
+	#[allow(dead_code)]
 	pub fn new(rules: Vec<Grid>) -> Self {
 		Self(
 			LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), rules)

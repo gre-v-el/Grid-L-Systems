@@ -61,4 +61,9 @@ split the project into workspaces
 rotate rule
 duplicate rule
 save to file
+rotate left rule
+move rule up down
+duplicate rule
+send from everything to everything
+save/load
 */

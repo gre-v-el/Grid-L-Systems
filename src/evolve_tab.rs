@@ -1,7 +1,7 @@
-use egui_macroquad::{macroquad::prelude::*, egui::Context};
-use soft_evolution::{genetic_algorithm::GeneticAlgorithm, l_system::{grid::Grid, cell::Cell}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, SidePanel, panel::Side, vec2, Sense}};
+use soft_evolution::{genetic_algorithm::GeneticAlgorithm, l_system::grid::Grid};
 
-use crate::{controls::Controls, state::Tab, ls_evolve::LS};
+use crate::{controls::Controls, state::Tab, ls_evolve::LS, ui::draw_grid_ui};
 
 pub struct EvolveTab {
 	controls: Controls,
@@ -24,7 +24,16 @@ impl Tab for EvolveTab {
     }
 
     fn draw_ui(&mut self, ctx: &Context) {
-        
+        SidePanel::new(Side::Right, "Tool Choice")
+			.resizable(false)
+			.default_width(150.0)
+			.show(ctx, |ui| {
+
+				let (target_rect, _) = ui.allocate_exact_size(vec2(140.0, 100.0), Sense::hover());
+				draw_grid_ui(ui, self.gen_alg.goal(), target_rect);
+
+
+			});
     }
 
     fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
