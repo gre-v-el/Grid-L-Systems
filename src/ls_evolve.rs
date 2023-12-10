@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use rand::Rng;
 use rand::rngs::ThreadRng;
 
@@ -7,10 +6,6 @@ use soft_evolution::l_system::LSystem;
 use soft_evolution::genetic_algorithm::evolve::Evolve;
 use soft_evolution::l_system::cell::{Cell, Direction};
 use soft_evolution::l_system::grid::Grid;
-
-lazy_static!(
-	static ref TEMPLATE: Grid = Grid::from_string(include_str!("templates/cross-circle.txt"), [5, 5]).unwrap();
-);
 
 
 pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
@@ -31,7 +26,6 @@ pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
 pub struct LS(pub LSystem);
 
 impl LS {
-	#[allow(dead_code)]
 	pub fn new(rules: Vec<Grid>) -> Self {
 		Self(
 			LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), rules)
@@ -39,7 +33,7 @@ impl LS {
 	}
 }
 
-impl Evolve for LS {
+impl Evolve<Grid> for LS {
     fn new_random(rng: &mut ThreadRng) -> Self {
 		let stem_types = rng.gen_range(2..=5u8);
 		let mut rules = Vec::with_capacity(stem_types as usize);
@@ -147,12 +141,12 @@ impl Evolve for LS {
 		LS(LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), rules))
     }
 
-    fn fitness(&mut self) -> f32 {
+    fn fitness(&mut self, goal: &Grid) -> f32 {
     	for _ in 0..25 {
 		   self.0.try_step();
 		}
 
-		let simmilarity = TEMPLATE.score_simmilarity(self.0.state());
+		let simmilarity = goal.score_simmilarity(self.0.state());
 		let mut rules_cells = 0;
 
 		for rule in self.0.rules() {

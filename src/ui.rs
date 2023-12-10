@@ -1,7 +1,7 @@
 use egui_macroquad::egui::{Ui, WidgetText, Layout, Align, TextStyle, Vec2, Sense, Response, Label, RichText, Color32, Button, vec2, Rect, pos2, Stroke};
 use soft_evolution::l_system::{grid::Grid, cell::Cell};
 
-use crate::drawing::{arr_to_col, cell_col};
+use crate::drawing::{arr_to_col, cell_col, stem_cell_col};
 
 pub fn centered_button(ui: &mut Ui, size: Vec2, text: impl Into<WidgetText>) -> Response{
 	let (rect, response) = ui.allocate_exact_size(size, Sense::click());
@@ -20,13 +20,15 @@ pub fn centered_button(ui: &mut Ui, size: Vec2, text: impl Into<WidgetText>) -> 
 
 pub fn rule_button(ui: &mut Ui, rule: &Grid, index: usize, num_rules: usize, selectible: bool) -> (Response, Response) {
 	let (rect, big_response) = ui.allocate_exact_size(Vec2::new(150.0, 40.0), Sense::click());
-	
+	let mut line_rect = rect.clone();
+	line_rect.set_width(5.0);	
 
 	let visuals = ui.style().interact_selectable(&big_response, selectible);
 	ui.painter().rect(rect, visuals.rounding, visuals.bg_fill, visuals.bg_stroke);
+	ui.painter().rect(line_rect, visuals.rounding, arr_to_col(stem_cell_col(index as u8)), Stroke::NONE);
 
 	let mut ui = ui.child_ui(rect, Layout::left_to_right(Align::Center));
-	ui.add_space(5.0);
+	ui.add_space(10.0);
 	ui.add(Label::new(RichText::new(format!("rule {index}")).color(Color32::WHITE)));
 
 	let small_response = ui.add_enabled(num_rules > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0)));

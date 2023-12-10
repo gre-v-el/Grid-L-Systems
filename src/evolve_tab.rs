@@ -1,42 +1,37 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, Window}};
+use egui_macroquad::{macroquad::prelude::*, egui::Context};
+use soft_evolution::{genetic_algorithm::GeneticAlgorithm, l_system::{grid::Grid, cell::Cell}};
 
-use crate::{controls::Controls, state::Tab};
+use crate::{controls::Controls, state::Tab, ls_evolve::LS};
 
 pub struct EvolveTab {
 	controls: Controls,
+	gen_alg: GeneticAlgorithm<LS, Grid>,
 }
 
 impl Tab for EvolveTab {
     fn new() -> Self {
         Self {
 			controls: Controls::new(),
+			gen_alg: GeneticAlgorithm::new(100, 30, 1.0, Grid::from_string(include_str!("templates/cross.txt"), [2, 2]).unwrap()),
 		}
     }
 	
     fn frame(&mut self, can_use_mouse: bool) {
 		self.controls.update(can_use_mouse);
 		set_camera(self.controls.camera());
-        draw_rectangle(0.0, 0.0, 1.0, 1.0, RED);
+		
+		
     }
 
     fn draw_ui(&mut self, ctx: &Context) {
-        Window::new("EvolveInspector")
-			.title_bar(false)
-			.collapsible(false)
-			.fixed_pos((10.0, 35.0))
-			.movable(false)
-			.resizable(false)
-			.show(ctx, |ui| {
-				ui.label("Evolve");
-			}
-		);
+        
     }
 
-    fn send_to(&mut self) -> Option<(usize, Vec<soft_evolution::l_system::grid::Grid>)> {
+    fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
         None
     }
 
-    fn receive(&mut self, _system: Vec<soft_evolution::l_system::grid::Grid>) {
+    fn receive(&mut self, _system: Vec<Grid>) {
         
     }
 }

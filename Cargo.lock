@@ -827,7 +827,6 @@ name = "soft_evolution"
 version = "0.1.0"
 dependencies = [
  "egui-macroquad",
- "lazy_static",
  "rand",
 ]
 
