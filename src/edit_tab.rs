@@ -146,6 +146,15 @@ impl EditTab {
 				if centered_button(ui, vec2(150.0, 25.0), "Optimize").clicked() {
 					self.l_rules[self.current_rule].contract_empty();
 				}
+				if centered_button(ui, vec2(150.0, 25.0), "Clear").clicked() {
+					self.l_rules[self.current_rule].clear();
+				}
+				if centered_button(ui, vec2(150.0, 25.0), "Rotate Left").clicked() {
+					self.l_rules[self.current_rule].rotate(Direction::LEFT);
+				}
+				if centered_button(ui, vec2(150.0, 25.0), "Rotate Right").clicked() {
+					self.l_rules[self.current_rule].rotate(Direction::RIGHT);
+				}
 
 				ui.separator();
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {

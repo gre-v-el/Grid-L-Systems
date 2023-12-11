@@ -355,6 +355,18 @@ impl Grid {
 		top || bottom || left || right
 	}
 
+	pub fn rotate(&mut self, dir: Direction) {
+		let mut new = Grid::single(Cell::Empty);
+		new.insert(&self, [0, 0], dir);
+		*self = new;
+	}
+
+	pub fn clear(&mut self) {
+		for c in &mut self.contents {
+			*c = Cell::Empty;
+		}
+	}
+
 
 	pub fn contents(&self) -> &Vec<Cell> {
 		&self.contents

@@ -58,9 +58,6 @@ async fn main() {
 evolve tab
 mutation factor
 split the project into workspaces
-rotate rule
-save to file
-clear rule
 send from everything to everything
 save/load
 */
