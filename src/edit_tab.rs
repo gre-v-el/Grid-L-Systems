@@ -1,7 +1,7 @@
 use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea, Color32, Layout, Align}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}, is_valid};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button}};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button, RuleButtonResponse}};
 
 #[derive(PartialEq)]
 enum EditTool {
@@ -29,7 +29,8 @@ pub struct EditTab {
 impl EditTab {
 
 	pub fn rules_ui(&mut self, ctx: &Context) {
-		let mut to_delete = None;
+		use RuleButtonResponse as Resp;
+		let mut resp = (Resp::None, 0);
 
 		SidePanel::new(Side::Left, "Rule Choice")
 			.resizable(false)
@@ -37,12 +38,9 @@ impl EditTab {
 			.show(ctx, |ui| {
 				ScrollArea::vertical().show(ui, |ui| {
 					for (i, rule) in self.l_rules.iter().enumerate() {
-						let (big_resp, small_resp) = rule_button(ui, rule, i, self.l_rules.len(), self.current_rule == i);
-						if big_resp.clicked() {
-							self.current_rule = i;
-						}
-						if small_resp.clicked() {
-							to_delete = Some(i);
+						let this_resp = rule_button(ui, rule, i, self.l_rules.len(), self.current_rule == i);
+						if this_resp != Resp::None {
+							resp = (this_resp, i);
 						}
 					}
 	
@@ -50,17 +48,47 @@ impl EditTab {
 					
 					if centered_button(ui, Vec2::new(150.0, 25.0), "\u{2795}").clicked() {
 						self.l_rules.push(Grid::single(Cell::Passive));
+						self.current_rule = self.l_rules.len() - 1;
 					}
 
 					ui.add_space(160.0);
 				});
 			});
 		
-		if let Some(i) = to_delete {
-			if self.current_rule >= i && self.current_rule != 0 {
-				self.current_rule -= 1;
-			}
-			self.l_rules.remove(i);
+
+		match resp {
+			(Resp::None, _) => {},
+			(Resp::Select, i) => self.current_rule = i,
+			(Resp::Delete, i) => {
+				if self.current_rule >= i && self.current_rule != 0 {
+					self.current_rule -= 1;
+				}
+				self.l_rules.remove(i);
+			},
+			(Resp::MoveUp, i) => {
+				self.l_rules.swap(i, i-1);
+				if i == self.current_rule {
+					self.current_rule -= 1;
+				}
+				else if i - 1 == self.current_rule {
+					self.current_rule += 1;
+				}
+			},
+			(Resp::MoveDown, i) => {
+				self.l_rules.swap(i, i+1);
+				if i == self.current_rule {
+					self.current_rule += 1;
+				}
+				else if i + 1 == self.current_rule {
+					self.current_rule -= 1;
+				}
+			},
+			(Resp::Duplicate, i) => {
+				self.l_rules.insert(i, self.l_rules[i].clone());
+				if self.current_rule > i {
+					self.current_rule += 1;
+				}
+			},
 		}
 	}
 

@@ -58,8 +58,23 @@ pub fn draw_grid_ui(ui: &mut Ui, grid: &Grid, mut rect: Rect) {
 	}
 }
 
-pub fn rule_button(ui: &mut Ui, rule: &Grid, index: usize, num_rules: usize, selectible: bool) -> (Response, Response) {
+#[derive(PartialEq)]
+pub enum RuleButtonResponse {
+	None,
+	Select,
+	Delete,
+	MoveUp,
+	MoveDown,
+	Duplicate,
+}
+
+pub fn rule_button(ui: &mut Ui, rule: &Grid, index: usize, num_rules: usize, selectible: bool) -> RuleButtonResponse {
+	let mut resp = RuleButtonResponse::None;
+	
 	let (rect, big_response) = ui.allocate_exact_size(Vec2::new(150.0, 40.0), Sense::click());
+	if big_response.clicked() {
+		resp = RuleButtonResponse::Select;
+	}
 	let mut line_rect = rect.clone();
 	line_rect.set_width(5.0);	
 
@@ -69,13 +84,34 @@ pub fn rule_button(ui: &mut Ui, rule: &Grid, index: usize, num_rules: usize, sel
 
 	let mut ui = ui.child_ui(rect, Layout::left_to_right(Align::Center));
 	ui.add_space(10.0);
-	ui.add(Label::new(RichText::new(format!("rule {index}")).color(Color32::WHITE)));
+	ui.add(Label::new(RichText::new(format!("{index}")).color(Color32::WHITE).strong()));
 
-	let small_response = ui.add_enabled(num_rules > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0)));
+	let tmp = ui.style().spacing.item_spacing;
+	ui.style_mut().spacing.item_spacing = vec2(2.0, 2.0);
+
+	ui.vertical(|ui| {
+		ui.add_space(1.0);
+		if ui.add_enabled(index > 0, Button::new("\u{2B06}")).clicked() {
+			resp = RuleButtonResponse::MoveUp;
+		}
+		if ui.add_enabled(index < num_rules-1, Button::new("\u{2B07}")).clicked() {
+			resp = RuleButtonResponse::MoveDown;
+		}
+	});
+	ui.vertical(|ui| {
+		ui.add_space(1.0);
+		if ui.add(Button::new("\u{1F5D0}")).clicked() {
+			resp = RuleButtonResponse::Duplicate;
+		}
+		if ui.add_enabled(num_rules > 1, Button::new("\u{1F5D1}").fill(Color32::from_rgb(150, 0, 0))).clicked() {
+			resp = RuleButtonResponse::Delete;
+		}
+	});
+
+	ui.style_mut().spacing.item_spacing = tmp;
 
 	let rect = ui.available_rect_before_wrap().shrink(5.0);
-	
 	draw_grid_ui(&mut ui, rule, rect);
 
-	(big_response, small_response)
+	resp
 }
