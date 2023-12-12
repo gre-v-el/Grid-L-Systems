@@ -22,7 +22,7 @@ pub struct EditTab {
 	draw_cell: CellType,
 	draw_stem_type: u8,
 	draw_stem_dir: Direction,
-	send: Option<(usize, Vec<Grid>)>,
+	send: Option<usize>,
 	send_error: bool,
 }
 
@@ -143,6 +143,7 @@ impl EditTab {
 				});
 
 				ui.separator();
+				ui.label("Rule options");
 				if centered_button(ui, vec2(150.0, 25.0), "Optimize").clicked() {
 					self.l_rules[self.current_rule].contract_empty();
 				}
@@ -155,11 +156,15 @@ impl EditTab {
 				if centered_button(ui, vec2(150.0, 25.0), "Rotate Right").clicked() {
 					self.l_rules[self.current_rule].rotate(Direction::RIGHT);
 				}
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Evolve").clicked() {
+					self.send = Some(1);
+				}
 
 				ui.separator();
+				ui.label("LSystem options");
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
 					if is_valid(&self.l_rules) {
-						self.send = Some((2, self.l_rules.clone()));
+						self.send = Some(2);
 					}
 					else {
 						self.send_error = true;
@@ -224,15 +229,19 @@ impl Tab for EditTab {
 	}
 
 	fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
-		if let Some((i, grid)) = self.send.take() {
-			self.send = None;
-
-			return Some((i, grid));
+		if let Some(i) = self.send.take() {
+			if i == 2 {
+				return Some((i, self.l_rules.clone()));
+			}
+			else {
+				return Some((i, self.l_rules[self.current_rule..=self.current_rule].into()))
+			}
 		}
 		None
 	}
 
-	fn receive(&mut self, _system: Vec<Grid>) {
-		
+	fn receive(&mut self, system: Vec<Grid>) {
+		self.l_rules = system;
+		self.current_rule = 0;
 	}
 }

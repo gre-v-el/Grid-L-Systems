@@ -55,14 +55,11 @@ async fn main() {
 
 
 /*
-evolve tab
 mutation factor
 split the project into workspaces
-send from everything to everything
 save/load
 fitness -> loss
 smooth killing
 edit evolve parms
-reset
 fitness optimizations
 */

@@ -17,6 +17,8 @@ pub struct GrowTab {
 	
 	show_grid: bool,
 	animate: bool,
+
+	send: bool,
 }
 
 impl GrowTab {
@@ -58,6 +60,8 @@ impl Tab for GrowTab {
 
 			show_grid: false,
 			animate: true,
+
+			send: false,
 		}
     }
 
@@ -127,12 +131,23 @@ impl Tab for GrowTab {
 
 				ui.checkbox(&mut self.show_grid, "Show Grid");
 				ui.checkbox(&mut self.animate, "Animate");
+
+				ui.separator();
+
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Evolve").clicked() {
+					self.send = true;
+				}
 			}
 		);
     }
 
     fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
-        None
+        if self.send {
+			self.send = false;
+			return Some((1, vec![self.system.state().clone()]));
+		}
+		
+		None
     }
 
     fn receive(&mut self, system: Vec<Grid>) {

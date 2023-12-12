@@ -59,6 +59,14 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		self.generation_number += 1;
 	}
 
+	pub fn reset(&mut self) {
+		self.generation_number = 0;
+		for agent in &mut self.agents {
+			*agent = (T::new_random(&mut self.rng), 0.0);
+		}
+		self.calculate_fitnesses();
+	}
+
 	pub fn perform_generations(&mut self, n: usize) {
 		for _ in 0..n {
 			self.perform_generation();

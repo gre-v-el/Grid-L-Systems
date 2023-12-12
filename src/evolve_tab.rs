@@ -20,6 +20,8 @@ pub struct EvolveTab {
 	showing: usize,
 	evolve_budget: u16,
 	selected: usize,
+
+	send: Option<usize>,
 }
 
 impl Tab for EvolveTab {
@@ -32,6 +34,7 @@ impl Tab for EvolveTab {
 			showing: 16,
 			evolve_budget: 10,
 			selected: 0,
+			send: None,
 		}
     }
 	
@@ -67,6 +70,10 @@ impl Tab for EvolveTab {
 						self.gen_alg.perform_generation();
 					}
 				});
+				
+				if centered_button(ui, vec2(150.0, 25.0), "Reset").clicked() {
+					self.gen_alg.reset();
+				}
 
 				ui.separator();
 
@@ -75,7 +82,7 @@ impl Tab for EvolveTab {
 					ui.label("Show");
 				});
 				ui.horizontal(|ui|{
-					ui.add(DragValue::new(&mut self.evolve_budget).speed(0.2));
+					ui.add(DragValue::new(&mut self.evolve_budget).speed(0.2).suffix("ms"));
 					ui.label("Evolve Budget");
 				});
 			});
@@ -92,7 +99,16 @@ impl Tab for EvolveTab {
 				ui.separator();
 
 				ui.label(format!("{}{} out of {}", self.selected + 1, number_suffix(self.selected + 1), self.gen_alg.agents().len()));
-				ui.label(format!("fitness: {}", inspected.1));
+				ui.label(format!("fitness: {:.3e}", inspected.1));
+
+				ui.separator();
+
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Edit").clicked() {
+					self.send = Some(0);
+				}
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
+					self.send = Some(2);
+				}
 			});
 
 			CentralPanel::default().show(ctx, |ui| {
@@ -148,10 +164,14 @@ impl Tab for EvolveTab {
     }
 
     fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
-        None
+        if let Some(i) = self.send.take() {
+			return Some((i, self.gen_alg.agents()[self.selected].0.0.rules().into()));
+		}
+		None
     }
 
-    fn receive(&mut self, _system: Vec<Grid>) {
-        
+    fn receive(&mut self, system: Vec<Grid>) {
+		let goal = system.into_iter().next().unwrap();
+        self.gen_alg.set_goal(goal);
     }
 }
