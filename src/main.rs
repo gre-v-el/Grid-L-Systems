@@ -60,6 +60,9 @@ mutation factor
 split the project into workspaces
 send from everything to everything
 save/load
-
-branch singlethreaded-evolve, delete multithreading, benchmark
+fitness -> loss
+smooth killing
+edit evolve parms
+reset
+fitness optimizations
 */

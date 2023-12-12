@@ -18,11 +18,20 @@ pub fn centered_button(ui: &mut Ui, size: Vec2, text: impl Into<WidgetText>) -> 
 	response
 }
 
-fn round_vec_to_pixel(ui: &Ui, vec: Vec2) -> Vec2 {
-	vec2(round_to_pixel(ui, vec.x), round_to_pixel(ui, vec.y))
+fn round_rect_to_pixel(ui: &Ui, rect: Rect) -> Rect {
+	Rect {
+		min: pos2(floor_to_pixel(ui, rect.min.x), floor_to_pixel(ui, rect.min.y)),
+		max: pos2(ceil_to_pixel(ui, rect.max.x), ceil_to_pixel(ui, rect.max.y)),
+	}
+	//vec2(round_to_pixel(ui, vec.x), round_to_pixel(ui, vec.y))
 }
 
-fn round_to_pixel(ui: &Ui, point: f32) -> f32 {
+fn floor_to_pixel(ui: &Ui, point: f32) -> f32 {
+	let pixels_per_point = ui.ctx().pixels_per_point();
+	(point * pixels_per_point).floor() / pixels_per_point
+}
+
+fn ceil_to_pixel(ui: &Ui, point: f32) -> f32 {
 	let pixels_per_point = ui.ctx().pixels_per_point();
 	(point * pixels_per_point).ceil() / pixels_per_point
 }
@@ -41,15 +50,13 @@ pub fn draw_grid_ui(ui: &mut Ui, grid: &Grid, mut rect: Rect) {
 		if cell.same_type(&Cell::Empty) { continue; }
 		let [x, y] = grid.pos_to_raw_pos([x, y]);
 		ui.painter().rect(
-			Rect::from_min_size(
+			round_rect_to_pixel(ui, Rect::from_min_size(
 				pos2(
-					round_to_pixel(ui, x as f32 * scale),
-					round_to_pixel(ui, (grid.height() - 1 - y) as f32 * scale),
-				) + round_vec_to_pixel(ui, rect.min.to_vec2()), 
-				vec2(
-					round_to_pixel(ui, scale),
-					round_to_pixel(ui, scale),
-				)), 
+					x as f32 * scale,
+					(grid.height() - 1 - y) as f32 * scale,
+				) + rect.min.to_vec2(),
+				vec2(scale, scale)
+			)),
 				0.0, 
 				arr_to_col(cell_col(&cell)
 			), 

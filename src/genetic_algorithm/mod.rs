@@ -85,6 +85,10 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		&self.agents[self.generation_count / 2]
 	}
 
+	pub fn agents(&self) -> &[(T, f32)] {
+		&self.agents
+	}
+
 	pub fn generation_number(&self) -> usize {
 		self.generation_number
 	}
