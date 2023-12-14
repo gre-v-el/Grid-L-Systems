@@ -57,14 +57,10 @@ async fn main() {
 /*
 split the project into workspaces
 save/load
-edit evolve parms
 smooth killing
 fitness optimizations
 fitness -> loss
 mutation factor
 fitness - discriminate cell details
-grow - iteration
-mutate - allow for new cells when expanding
-grow - reset
-evolve - reset only after pause
+change all usizes to u_ so that they can be serialized
 */

@@ -12,6 +12,7 @@ pub struct GrowTab {
 	animated_from: Option<([isize; 2], Direction)>,
 
 	running: bool,
+	iteration: u32,
 	step_delay: f64,
 	last_update: f64,
 	
@@ -34,11 +35,13 @@ impl GrowTab {
 			else {
 				panic!();
 			}
+			self.iteration += 1;
+			self.system.try_step();
 		}
 		else {
 			self.animated_from = None;
 		}
-		self.system.try_step();
+
 	}
 }
 
@@ -55,6 +58,7 @@ impl Tab for GrowTab {
 			animated_from: None,
 
 			running: false,
+			iteration: 0,
 			step_delay: 1.0,
 			last_update: -1.0,
 
@@ -106,17 +110,22 @@ impl Tab for GrowTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
+				ui.label(format!("steps: {}", self.iteration));
+
+				let text = if self.running { "Pause" } else { "Grow" };
+				if centered_button(ui, vec2(150.0, 25.0), text).clicked() {
+					self.running = !self.running;
+				}
+				
 				ui.add_enabled_ui(!self.running, |ui| {
 					if centered_button(ui, vec2(150.0, 25.0), "Step").clicked() {
 						self.step_system();		
 					}
+					if centered_button(ui, vec2(150.0, 25.0), "Reset").clicked() {
+						self.system.set_state(Grid::single(Cell::Stem(0, Direction::UP)));
+						self.iteration = 0;
+					}
 				});
-
-				let text = if self.running { "Pause" } else { "Grow" };
-				
-				if centered_button(ui, vec2(150.0, 25.0), text).clicked() {
-					self.running = !self.running;
-				}
 
 				ui.separator();
 
@@ -160,6 +169,7 @@ impl Tab for GrowTab {
     fn receive(&mut self, system: Vec<Grid>) {
         self.system = LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), system);
 		self.running = false;
+		self.iteration = 0;
     }
 	
 	

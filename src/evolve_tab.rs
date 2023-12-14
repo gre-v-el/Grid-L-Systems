@@ -85,11 +85,11 @@ impl Tab for EvolveTab {
 					if centered_button(ui, vec2(150.0, 25.0), "Step").clicked() {
 						self.gen_alg.perform_generation();
 					}
+					if centered_button(ui, vec2(150.0, 25.0), "Reset").clicked() {
+						self.gen_alg.reset();
+					}
 				});
 				
-				if centered_button(ui, vec2(150.0, 25.0), "Reset").clicked() {
-					self.gen_alg.reset();
-				}
 
 				ui.separator();
 
