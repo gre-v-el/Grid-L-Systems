@@ -1,5 +1,5 @@
 [package]
-name = "soft_evolution"
+name = "GLS_Evolve"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,9 +7,5 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-
-[workspace]
-
-members = [
-	"GLS_Evolve"
-]
+egui-macroquad = { git = "https://github.com/gre-v-el/egui-macroquad-updated.git" }
+soft_evolution = { path = "../" }
