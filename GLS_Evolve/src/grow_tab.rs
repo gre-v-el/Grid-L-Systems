@@ -9,7 +9,7 @@ pub struct GrowTab {
 	system: LSystem,
 	prev_system: Grid,
 	animated_rule: usize,
-	animated_from: Option<([isize; 2], Direction)>,
+	animated_from: Option<([i32; 2], Direction)>,
 
 	running: bool,
 	iteration: u32,

@@ -16,7 +16,7 @@ fn number_suffix(n: usize) -> &'static str {
 
 pub struct EvolveParams {
 	pub goal: Grid,
-	pub max_steps: usize,
+	pub max_steps: u16,
 }
 
 pub struct EvolveTab {

@@ -9,7 +9,7 @@ use cell::Cell;
 pub struct LSystem {
 	state: Grid,
 	rules: Vec<Grid>,
-	stem_queue: VecDeque<[isize; 2]>,
+	stem_queue: VecDeque<[i32; 2]>,
 }
 
 impl LSystem {
@@ -93,7 +93,7 @@ impl LSystem {
 		&self.rules
 	}
 
-	pub fn queue(&self) -> &VecDeque<[isize; 2]> {
+	pub fn queue(&self) -> &VecDeque<[i32; 2]> {
 		&self.stem_queue
 	}
 }

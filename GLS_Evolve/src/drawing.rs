@@ -150,7 +150,7 @@ pub fn draw_grid(grid: &Grid) {
 	}
 }
 
-pub fn draw_grid_animated(grid: &Grid, prev_grid: &Grid, rule: &Grid, from: [isize; 2], from_dir: Direction, t: f32) {
+pub fn draw_grid_animated(grid: &Grid, prev_grid: &Grid, rule: &Grid, from: [i32; 2], from_dir: Direction, t: f32) {
 	let t_fast = (t*1.5).min(1.0);
 
 	let from_x = from[0] as f32;

@@ -10,7 +10,7 @@ pub struct GeneticAlgorithm<T, U> where T: Evolve<U> {
 	pub generation_count: usize,
 	pub survivors_count: usize,
 	agents: Vec<(T, f32)>,
-	generation_number: usize,
+	generation_number: u32,
 	params: U,
 }
 
@@ -65,7 +65,7 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		self.calculate_fitnesses();
 	}
 
-	pub fn perform_generations(&mut self, n: usize) {
+	pub fn perform_generations(&mut self, n: u32) {
 		for _ in 0..n {
 			self.perform_generation();
 		}
@@ -99,7 +99,7 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		&self.agents
 	}
 
-	pub fn generation_number(&self) -> usize {
+	pub fn generation_number(&self) -> u32 {
 		self.generation_number
 	}
 } 

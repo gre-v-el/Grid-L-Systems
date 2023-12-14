@@ -200,7 +200,7 @@ impl Tab for EditTab {
 			self.send_error = false;
 
 			let pos: [i32; 2] = self.controls.mouse_world.floor().as_ivec2().into();
-			let pos = [pos[0] as isize, -pos[1] as isize];
+			let pos = [pos[0], -pos[1]];
 			
 			let rule = &mut self.l_rules[self.current_rule];
 			

@@ -39,6 +39,7 @@ smooth killing
 fitness optimizations
 fitness -> loss
 mutation factor
+fitness components weights
 fitness - discriminate cell details
 change all usizes to u_ so that they can be serialized
 */

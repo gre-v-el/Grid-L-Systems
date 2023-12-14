@@ -14,7 +14,7 @@ pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
 	let width = rng.gen_range(1..=4);
 	let height = rng.gen_range(1..=4);
 
-	let mut contents = Vec::with_capacity(width * height);
+	let mut contents = Vec::with_capacity((width * height) as usize);
 
 	for _ in 0..(width*height) {
 		let cell = Cell::random(rng, stem_types);
