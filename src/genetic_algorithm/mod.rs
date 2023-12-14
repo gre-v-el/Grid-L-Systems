@@ -6,16 +6,16 @@ use rand::{seq::SliceRandom, rngs::ThreadRng, thread_rng};
 
 pub struct GeneticAlgorithm<T, U> where T: Evolve<U> {
 	rng: ThreadRng,
-	mutation_factor: f32,
-	generation_count: usize,
-	survivors_count: usize,
+	pub mutation_factor: f32,
+	pub generation_count: usize,
+	pub survivors_count: usize,
 	agents: Vec<(T, f32)>,
 	generation_number: usize,
-	goal: U,
+	params: U,
 }
 
 impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
-	pub fn new(generation_count: usize, survivors_count: usize, mutation_factor: f32, goal: U) -> Self {
+	pub fn new(generation_count: usize, survivors_count: usize, mutation_factor: f32, params: U) -> Self {
 		let mut rng = thread_rng();
 		let agents = (0..generation_count).map(|_| (T::new_random(&mut rng), 0.0)).collect();
 		let mut ret = Self {
@@ -25,7 +25,7 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 			survivors_count,
 			agents,
 			generation_number: 0,
-			goal,
+			params,
 		};
 
 		ret.calculate_fitnesses();
@@ -35,7 +35,7 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 
 	fn calculate_fitnesses(&mut self) {
 		for (agent, fitness) in &mut self.agents {
-			*fitness = agent.fitness(&self.goal);
+			*fitness = agent.fitness(&self.params);
 		}
 	}
 
@@ -48,10 +48,8 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 	}
 
 	pub fn perform_generation(&mut self) {
-		if self.generation_count > 0 {
-			self.agents.truncate(self.survivors_count);
-			self.agents.iter_mut().for_each(|e| e.0.reset());
-		}
+		self.agents.truncate(self.survivors_count);
+		self.agents.iter_mut().for_each(|e| e.0.reset());
 		self.reproduce();
 		self.calculate_fitnesses();
 		self.agents.sort_unstable_by(|e1, e2| e2.1.total_cmp(&e1.1));
@@ -73,12 +71,16 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		}
 	}
 
-	pub fn set_goal(&mut self, goal: U) {
-		self.goal = goal;
+	pub fn set_params(&mut self, params: U) {
+		self.params = params;
 	}
 
-	pub fn goal(&self) -> &U {
-		&self.goal
+	pub fn params(&self) -> &U {
+		&self.params
+	}
+
+	pub fn params_mut(&mut self) -> &mut U {
+		&mut self.params
 	}
 
 	pub fn best(&self) -> &(T, f32) {

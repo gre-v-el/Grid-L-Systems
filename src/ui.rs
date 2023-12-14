@@ -1,4 +1,6 @@
-use egui_macroquad::egui::{Ui, WidgetText, Layout, Align, TextStyle, Vec2, Sense, Response, Label, RichText, Color32, Button, vec2, Rect, pos2, Stroke};
+use std::ops::RangeInclusive;
+
+use egui_macroquad::egui::{Ui, WidgetText, Layout, Align, TextStyle, Vec2, Sense, Response, Label, RichText, Color32, Button, vec2, Rect, pos2, Stroke, DragValue, emath::Numeric};
 use soft_evolution::l_system::{grid::Grid, cell::Cell};
 
 use crate::drawing::{arr_to_col, cell_col, stem_cell_col};
@@ -121,4 +123,11 @@ pub fn rule_button(ui: &mut Ui, rule: &Grid, index: usize, num_rules: usize, sel
 	draw_grid_ui(&mut ui, rule, rect);
 
 	resp
+}
+
+pub fn drag_label<Num: Numeric>(ui: &mut Ui, v: &mut Num, range: RangeInclusive<Num>, speed: f64, label: impl Into<WidgetText>) {
+	ui.horizontal(|ui|{
+		ui.add(DragValue::new(v).clamp_range(range).speed(speed));
+		ui.label(label);
+	});
 }

@@ -18,7 +18,7 @@ pub struct GrowTab {
 	show_grid: bool,
 	animate: bool,
 
-	send: bool,
+	send: Option<usize>,
 }
 
 impl GrowTab {
@@ -61,7 +61,7 @@ impl Tab for GrowTab {
 			show_grid: false,
 			animate: true,
 
-			send: false,
+			send: None,
 		}
     }
 
@@ -134,17 +134,24 @@ impl Tab for GrowTab {
 
 				ui.separator();
 
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Edit").clicked() {
+					self.send = Some(0);
+				}
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Evolve").clicked() {
-					self.send = true;
+					self.send = Some(1);
 				}
 			}
 		);
     }
 
     fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
-        if self.send {
-			self.send = false;
-			return Some((1, vec![self.system.state().clone()]));
+        if let Some(i) = self.send.take() {
+			if i == 1 {
+				return Some((i, vec![self.system.state().clone()]));
+			}
+			else {
+				return Some((i, self.system.rules().into()));
+			}
 		}
 		
 		None

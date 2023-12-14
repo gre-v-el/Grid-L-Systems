@@ -55,11 +55,16 @@ async fn main() {
 
 
 /*
-mutation factor
 split the project into workspaces
 save/load
-fitness -> loss
-smooth killing
 edit evolve parms
+smooth killing
 fitness optimizations
+fitness -> loss
+mutation factor
+fitness - discriminate cell details
+grow - iteration
+mutate - allow for new cells when expanding
+grow - reset
+evolve - reset only after pause
 */

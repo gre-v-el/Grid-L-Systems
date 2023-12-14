@@ -12,7 +12,7 @@ pub enum Cell {
 impl Cell {
 	pub fn random(rng: &mut ThreadRng, stem_types: u8) -> Self {
 		match rng.gen_range(0..8) {
-			0 		=> Cell::Stem(rng.gen_range(1..stem_types), Direction::random(rng)),
+			0 		=> Cell::Stem(rng.gen_range(0..stem_types), Direction::random(rng)),
 			1..=4 	=> Cell::Passive,
 			_ 		=> Cell::Empty,
 		}

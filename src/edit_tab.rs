@@ -124,9 +124,7 @@ impl EditTab {
 									}
 									ui.spacing_mut().item_spacing = tmp;
 								});
-								ui.horizontal(|ui| {
-									ui.add(DragValue::new(&mut self.draw_stem_type).speed(0.1).clamp_range(0..=255));
-								});
+								ui.add(DragValue::new(&mut self.draw_stem_type).speed(0.1).clamp_range(0..=255));
 							});
 							ui.label("Stem cell type");
 						});

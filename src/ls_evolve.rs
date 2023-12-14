@@ -7,6 +7,8 @@ use soft_evolution::genetic_algorithm::evolve::Evolve;
 use soft_evolution::l_system::cell::{Cell, Direction};
 use soft_evolution::l_system::grid::Grid;
 
+use crate::evolve_tab::EvolveParams;
+
 
 pub fn random_grid(rng: &mut ThreadRng, stem_types: u8) -> Grid {
 	let width = rng.gen_range(1..=4);
@@ -34,9 +36,9 @@ impl LS {
 	}
 }
 
-impl Evolve<Grid> for LS {
+impl Evolve<EvolveParams> for LS {
     fn new_random(rng: &mut ThreadRng) -> Self {
-		let stem_types = rng.gen_range(2..=5u8);
+		let stem_types = rng.gen_range(1..=5u8);
 		let mut rules = Vec::with_capacity(stem_types as usize);
 
 		for _ in 0..stem_types {
@@ -109,30 +111,30 @@ impl Evolve<Grid> for LS {
 			},
 		}
 
-		// // clear dead rules
-		// let mut used = vec![false; rules.len()];
-		// used[0] = true;
-		// for rule in &rules {
-		// 	for cell in rule.contents() {
-		// 		if let Cell::Stem(n, _) = cell {
-		// 			used[*n as usize] = true;
-		// 		}
-		// 	}
-		// }
+		// clear dead rules
+		let mut used = vec![false; rules.len()];
+		used[0] = true;
+		for rule in &rules {
+			for cell in rule.contents() {
+				if let Cell::Stem(n, _) = cell {
+					used[*n as usize] = true;
+				}
+			}
+		}
 
-		// for (i, keep) in used.into_iter().enumerate().rev() {
-		// 	if keep { continue; }
+		for (i, keep) in used.into_iter().enumerate().rev() {
+			if keep { continue; }
 			
-		// 	rules.remove(i);
+			rules.remove(i);
 				
-		// 	for rule in &mut rules {
-		// 		for cell in rule.contents_mut() {
-		// 			if let Cell::Stem(n, _) = cell {
-		// 				if *n as usize > i { *n -= 1 }
-		// 			}
-		// 		}
-		// 	}
-		// }
+			for rule in &mut rules {
+				for cell in rule.contents_mut() {
+					if let Cell::Stem(n, _) = cell {
+						if *n as usize >= i { *n -= 1 }
+					}
+				}
+			}
+		}
 
 		// shrink empty borders
 		for rule in &mut rules {
@@ -142,13 +144,13 @@ impl Evolve<Grid> for LS {
 		LS(LSystem::new(Grid::single(Cell::Stem(0, Direction::UP)), rules))
     }
 
-    fn fitness(&mut self, goal: &Grid) -> f32 {
-    	for _ in 0..25 {
-		   self.0.try_step();
+    fn fitness(&mut self, params: &EvolveParams) -> f32 {
+    	for _ in 0..params.max_steps {
+		   if !self.0.try_step() { break; }
 		}
 
-		let simmilarity = goal.score_simmilarity(self.0.state());
-		let mut rules_cells = 0;
+		let simmilarity = params.goal.score_simmilarity(self.0.state());
+		let mut rules_cells: usize = 0;
 
 		for rule in self.0.rules() {
 			rules_cells += rule.contents().len() * rule.contents().len();
