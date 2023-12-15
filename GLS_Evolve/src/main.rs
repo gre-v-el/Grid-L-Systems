@@ -6,6 +6,7 @@ mod evolve_tab;
 mod grow_tab;
 mod drawing;
 mod ui;
+mod files;
 
 use std::env;
 use egui_macroquad::macroquad::{self, prelude::*};

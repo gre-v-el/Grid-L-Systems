@@ -1,7 +1,7 @@
-use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea, Color32, Layout, Align}};
+use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea, Color32, Layout, Align, Window}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}, is_valid};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button, RuleButtonResponse}};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button, RuleButtonResponse}, files::is_alphanumeric};
 
 #[derive(PartialEq)]
 enum EditTool {
@@ -24,6 +24,12 @@ pub struct EditTab {
 	draw_stem_dir: Direction,
 	send: Option<usize>,
 	send_error: bool,
+
+	saving_window: bool,
+	save_filename: String,
+	save_disclaimer: Option<String>,
+
+	loading_window: bool,
 }
 
 impl EditTab {
@@ -36,6 +42,7 @@ impl EditTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
+				ui.set_enabled(!self.saving_window && !self.loading_window);
 				ScrollArea::vertical().show(ui, |ui| {
 					for (i, rule) in self.l_rules.iter().enumerate() {
 						let this_resp = rule_button(ui, rule, i, self.l_rules.len(), self.current_rule == i);
@@ -97,6 +104,8 @@ impl EditTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
+				ui.set_enabled(!self.saving_window && !self.loading_window);
+
 				ui.horizontal(|ui| {
 					ui.selectable_value(&mut self.tool, EditTool::Draw, "Draw");
 					ui.selectable_value(&mut self.tool, EditTool::Erase, "Erase");
@@ -160,6 +169,12 @@ impl EditTab {
 
 				ui.separator();
 				ui.label("LSystem options");
+				if centered_button(ui, vec2(150.0, 25.0), "Save").clicked() {
+					self.saving_window = true;
+				}
+				if centered_button(ui, vec2(150.0, 25.0), "Load").clicked() {
+					self.loading_window = true;
+				}
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
 					if is_valid(&self.l_rules) {
 						self.send = Some(2);
@@ -174,6 +189,32 @@ impl EditTab {
 				}
 			});
     }
+
+	fn draw_saving_window(&mut self, ctx: &Context) {
+		Window::new("Save")
+			.collapsible(false)
+			.constraint_to(ctx.screen_rect())
+			.show(ctx, |ui| {
+
+				ui.text_edit_singleline(&mut self.save_filename);
+
+				if ui.button("save").clicked() {
+					if self.save_filename.trim().len() == 0 {
+						self.save_disclaimer = Some("Empty filename".into());
+					}
+					else if !is_alphanumeric(&self.save_filename) {
+						self.save_disclaimer = Some("Non-alphanumeric characters found".into());
+					}
+					else {
+						
+						self.saving_window = false;
+					}
+				}
+				if ui.button("cancel").clicked() {
+					self.saving_window = false;
+				}
+			});
+	}
 }
 
 impl Tab for EditTab {
@@ -190,10 +231,15 @@ impl Tab for EditTab {
 			current_rule: 0,
 			send: None,
 			send_error: false,
+			saving_window: false,
+			save_filename: String::new(),
+			loading_window: false,
+			save_disclaimer: None,
 		}
     }
 
-    fn frame(&mut self, can_use_mouse: bool) {
+    fn frame(&mut self, mut can_use_mouse: bool) {
+		can_use_mouse &= !self.saving_window && !self.loading_window;
 		self.controls.update(can_use_mouse);
 
 		if is_mouse_button_down(MouseButton::Left) && can_use_mouse {
@@ -219,11 +265,20 @@ impl Tab for EditTab {
 		draw_grid_lines(&self.l_rules[self.current_rule], pixel);
 		draw_grid(&self.l_rules[self.current_rule]);
 		draw_grid_axes(&self.l_rules[self.current_rule], pixel);
+
+		if self.saving_window || self.loading_window {
+			set_camera(&Camera2D::default());
+			draw_rectangle(-1.0, -1.0, 2.0, 2.0, Color::from_rgba(30, 30, 30, 100));
+		}
 	}
 
 	fn draw_ui(&mut self, ctx: &Context) {
 		self.rules_ui(ctx);
 		self.tools_ui(ctx);
+
+		if self.saving_window {
+			self.draw_saving_window(ctx);
+		}
 	}
 
 	fn send_to(&mut self) -> Option<(usize, Vec<Grid>)> {
