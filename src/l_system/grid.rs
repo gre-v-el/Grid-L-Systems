@@ -415,13 +415,74 @@ impl Grid {
 
 
 	pub fn serialize(&self) -> Vec<u8> {
+		let mut data = Vec::with_capacity((self.width * self.height) as usize);
 
+		data.extend_from_slice(&self.width.to_be_bytes());
+		data.extend_from_slice(&self.height.to_be_bytes());
+		data.extend_from_slice(&self.shift[0].to_be_bytes());
+		data.extend_from_slice(&self.shift[1].to_be_bytes());
 
-		todo!()
+		for cell in &self.contents {
+			match cell {
+				Cell::Empty => data.push(0),
+				Cell::Passive => data.push(1),
+				Cell::Stem(n, dir) => data.extend_from_slice(&[2, *n, dir.to_byte()]),
+			}
+		}
+		
+		data
 	}
 
-	pub fn deserialize() -> Self {
-		todo!()
+	pub fn deserialize(data: &[u8]) -> Result<Self, ()> {
+		if data.len() < 16 {
+			return Err(());
+		}
+
+		let width = u32::from_be_bytes(data[0..4].try_into().unwrap());
+		let height = u32::from_be_bytes(data[4..8].try_into().unwrap());
+		let shift = [
+			u32::from_be_bytes(data[8..12].try_into().unwrap()),
+			u32::from_be_bytes(data[12..16].try_into().unwrap()),
+		];
+
+		let mut contents = Vec::with_capacity((width * height) as usize);
+
+		let mut cursor = 16;
+		while cursor < data.len() {
+			match data[cursor] {
+				0 => contents.push(Cell::Empty),
+				1 => contents.push(Cell::Passive),
+				2 => {
+					if data.len() <= cursor+2 {
+						return Err(());
+					}
+
+					let n = data[cursor+1];
+					let dir = Direction::from_byte(data[cursor+2]);
+
+					contents.push(Cell::Stem(n, dir));
+					cursor += 2;
+				},
+				_ => return Err(()),
+			}
+			cursor += 1;
+		}
+
+		if contents.len() != (width * height) as usize {
+			return Err(());
+		}
+		if !(width > shift[0] && height > shift[1]) {
+			return Err(());
+		}
+
+		Ok(
+			Self {
+				contents,
+				width,
+				height,
+				shift,
+			}
+		)
 	}
 }
 

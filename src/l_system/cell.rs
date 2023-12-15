@@ -46,13 +46,26 @@ pub enum Direction {
 
 impl Direction {
 
-	pub fn random(rng: &mut ThreadRng) -> Self {
-		match rng.gen_range(0..4) {
+	pub fn from_byte(n: u8) -> Self {
+		match n {
 			0 => Direction::UP,
 			1 => Direction::LEFT,
 			2 => Direction::DOWN,
 			_ => Direction::RIGHT,
 		}
+	}
+
+	pub fn to_byte(&self) -> u8 {
+		match self {
+			Direction::UP => 0,
+			Direction::LEFT => 1,
+			Direction::DOWN => 2,
+			Direction::RIGHT => 4,
+		}
+	}
+
+	pub fn random(rng: &mut ThreadRng) -> Self {
+		Direction::from_byte(rng.gen_range(0..4))
 	}
 
 	pub fn rotate_vals<T: Copy>(&self, a: T, b: T, c: T, d: T) -> [T; 4] {
