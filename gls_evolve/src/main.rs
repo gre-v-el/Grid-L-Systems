@@ -38,7 +38,6 @@ async fn main() {
 
 
 /*
-save/load
 smooth killing
 fitness optimizations
 fitness -> loss
