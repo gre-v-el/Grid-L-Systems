@@ -1,7 +1,7 @@
 use egui_macroquad::{macroquad::prelude::*, egui::{Context, DragValue, SidePanel, panel::Side, Vec2, vec2, Button, ScrollArea, Color32, Layout, Align, Window}};
 use soft_evolution::l_system::{grid::Grid, cell::{Cell, Direction}, is_valid};
 
-use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button, RuleButtonResponse}, files::is_alphanumeric};
+use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_width, draw_grid_axes}, state::Tab, ui::{centered_button, rule_button, RuleButtonResponse}, files::{is_alphanumeric, save_rules, load_rules, get_filenames}};
 
 #[derive(PartialEq)]
 enum EditTool {
@@ -30,6 +30,9 @@ pub struct EditTab {
 	save_disclaimer: Option<String>,
 
 	loading_window: bool,
+	load_filenames: Vec<String>,
+	load_disclaimer: Option<String>,
+	load_selected: usize,
 }
 
 impl EditTab {
@@ -174,6 +177,8 @@ impl EditTab {
 				}
 				if centered_button(ui, vec2(150.0, 25.0), "Load").clicked() {
 					self.loading_window = true;
+					self.load_filenames = get_filenames();
+					self.load_selected = 0;
 				}
 				if centered_button(ui, vec2(150.0, 25.0), "Send to Grow").clicked() {
 					if is_valid(&self.l_rules) {
@@ -198,6 +203,8 @@ impl EditTab {
 
 				ui.text_edit_singleline(&mut self.save_filename);
 
+				ui.colored_label(Color32::RED, self.save_disclaimer.as_ref().unwrap_or(&"".into()));
+
 				if ui.button("save").clicked() {
 					if self.save_filename.trim().len() == 0 {
 						self.save_disclaimer = Some("Empty filename".into());
@@ -206,12 +213,56 @@ impl EditTab {
 						self.save_disclaimer = Some("Non-alphanumeric characters found".into());
 					}
 					else {
-						
-						self.saving_window = false;
+						if let Err(e) = save_rules(&self.l_rules, &self.save_filename) {
+							self.save_disclaimer = Some(e.to_string());
+						}
+						else {
+							self.saving_window = false;
+							self.load_disclaimer = None;
+						}
 					}
 				}
 				if ui.button("cancel").clicked() {
 					self.saving_window = false;
+					self.load_disclaimer = None;
+				}
+			});
+	}
+
+	fn draw_loading_window(&mut self, ctx: &Context) {
+		Window::new("Load")
+			.collapsible(false)
+			.constraint_to(ctx.screen_rect())
+			.show(ctx, |ui| {
+
+				ui.label("Choose the file to load:");
+
+				ScrollArea::vertical()
+					.max_height(200.0)
+					.auto_shrink([false, true])
+					.show(ui, |ui| {
+						for (i, name) in self.load_filenames.iter().enumerate() {
+							if ui.selectable_label(self.load_selected == i, name).clicked() {
+								self.load_selected = i;
+							}
+						}
+					});
+
+				ui.colored_label(Color32::RED, self.load_disclaimer.as_ref().unwrap_or(&"".into()));
+
+				if ui.button("load").clicked() {
+					match load_rules(&self.load_filenames[self.load_selected]) {
+						Ok(rules) => {
+							self.receive(rules);
+							self.loading_window = false;
+							self.load_disclaimer = None;
+						},
+						Err(message) => self.load_disclaimer = Some(message),
+					}
+				}
+				if ui.button("cancel").clicked() {
+					self.loading_window = false;
+					self.load_disclaimer = None;
 				}
 			});
 	}
@@ -233,8 +284,11 @@ impl Tab for EditTab {
 			send_error: false,
 			saving_window: false,
 			save_filename: String::new(),
-			loading_window: false,
 			save_disclaimer: None,
+			loading_window: false,
+			load_selected: 0,
+			load_filenames: Vec::new(),
+			load_disclaimer: None,
 		}
     }
 
@@ -278,6 +332,9 @@ impl Tab for EditTab {
 
 		if self.saving_window {
 			self.draw_saving_window(ctx);
+		}
+		if self.loading_window {
+			self.draw_loading_window(ctx);
 		}
 	}
 

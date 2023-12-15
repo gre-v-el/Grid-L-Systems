@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 
 use rand::rngs::ThreadRng;
 
@@ -433,7 +433,7 @@ impl Grid {
 		data
 	}
 
-	pub fn deserialize(data: &[u8]) -> Result<Self, ()> {
+	pub fn deserialize(data: &[u8]) -> Result<(Self, usize), ()> {
 		if data.len() < 16 {
 			return Err(());
 		}
@@ -448,7 +448,10 @@ impl Grid {
 		let mut contents = Vec::with_capacity((width * height) as usize);
 
 		let mut cursor = 16;
-		while cursor < data.len() {
+		for _ in 0..(width*height) {
+			if data.len() <= cursor {
+				return Err(());
+			}
 			match data[cursor] {
 				0 => contents.push(Cell::Empty),
 				1 => contents.push(Cell::Passive),
@@ -476,12 +479,15 @@ impl Grid {
 		}
 
 		Ok(
-			Self {
-				contents,
-				width,
-				height,
-				shift,
-			}
+			(
+				Self {
+					contents,
+					width,
+					height,
+					shift,
+				},
+				cursor
+			)
 		)
 	}
 }
@@ -553,6 +559,13 @@ impl Display for Grid {
 		}
 		write!(f, "{}", '\u{2518}')?;
 
+		Ok(())
+    }
+}
+
+impl Debug for Grid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self, f).unwrap();
 		Ok(())
     }
 }

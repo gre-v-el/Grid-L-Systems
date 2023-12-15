@@ -60,7 +60,7 @@ impl Direction {
 			Direction::UP => 0,
 			Direction::LEFT => 1,
 			Direction::DOWN => 2,
-			Direction::RIGHT => 4,
+			Direction::RIGHT => 3,
 		}
 	}
 
