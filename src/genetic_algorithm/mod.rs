@@ -27,7 +27,7 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 			agents,
 			generation_number: 0,
 			params,
-			tournament_size: 5,
+			tournament_size: 2,
 		};
 
 		ret.calculate_fitnesses();
@@ -75,12 +75,22 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		self.agents.truncate(self.survivors_count);
 	}
 
+	// when the generation size is increased between the generations, new random agents need to be spawned
+	fn refill(&mut self) {
+		while self.agents.len() < self.generation_count {
+			let agent = T::new_random(&mut self.rng);
+			self.agents.push((agent, -f32::MAX));
+		}
+	}
+
 	pub fn perform_generation(&mut self) {
+		self.refill();
 		self.select();
 		self.agents.iter_mut().for_each(|e| e.0.reset());
 		self.reproduce();
 		self.calculate_fitnesses();
-		self.agents.sort_unstable_by(|e1, e2| e2.1.total_cmp(&e1.1));
+		// sorting is only for presentation
+		self.agents.sort_unstable_by(|e1, e2| e2.1.total_cmp(&e1.1)); 
 
 		self.generation_number += 1;
 	}

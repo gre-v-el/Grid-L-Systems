@@ -149,13 +149,13 @@ impl Evolve<EvolveParams> for LS {
 		   if !self.0.try_step() { break; }
 		}
 
-		let simmilarity = params.goal.score_simmilarity(self.0.state());
-		let mut rules_cells: usize = 0;
+		let (same, different) = params.goal.score_simmilarity(self.0.state());
+		let mut size = 0.0;
 
 		for rule in self.0.rules() {
-			rules_cells += rule.contents().len() * rule.contents().len();
+			size += (rule.contents().len() as f32).powf(params.size_pow);
 		}
 
-		f32::powf(2.0, simmilarity) / rules_cells as f32
+		same as f32 * params.same_weight + different as f32 * params.different_weight + size * params.size_weight
 	}
 }

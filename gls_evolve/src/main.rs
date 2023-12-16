@@ -38,7 +38,7 @@ async fn main() {
 
 
 /*
-fitness optimizations
-fitness - discriminate cell details
-fitness components weights
+mutation factor
+mutate - separate stem cell (copy rule)
+visible_range & visible_count
 */

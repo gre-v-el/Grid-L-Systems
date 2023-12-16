@@ -17,6 +17,11 @@ fn number_suffix(n: usize) -> &'static str {
 pub struct EvolveParams {
 	pub goal: Grid,
 	pub max_steps: u16,
+
+	pub same_weight: f32,
+	pub different_weight: f32,
+	pub size_weight: f32,
+	pub size_pow: f32,
 }
 
 pub struct EvolveTab {
@@ -37,13 +42,18 @@ impl Tab for EvolveTab {
 		let params = EvolveParams {
 			goal,
 			max_steps: 25,
+
+			same_weight: 1.0,
+			different_weight: -10.0,
+			size_weight: -0.5,
+			size_pow: 1.5,
 		};
 
         Self {
-			gen_alg: GeneticAlgorithm::<LS, EvolveParams>::new(100, 30, 0.5, params),
+			gen_alg: GeneticAlgorithm::<LS, EvolveParams>::new(1000, 500, 0.5, params),
 			running: false,
 			showing: 16,
-			evolve_budget: 10,
+			evolve_budget: 50,
 			selected: 0,
 			send_selected: None,
 			send_target: false,
@@ -64,17 +74,6 @@ impl Tab for EvolveTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
-				ui.label("target:");
-
-				let (target_rect, _) = ui.allocate_exact_size(vec2(140.0, 100.0), Sense::hover());
-				draw_grid_ui(ui, &self.gen_alg.params().goal, target_rect);
-
-				if centered_button(ui, vec2(150.0, 25.0), "Send to Edit").clicked() {
-					self.send_target = true;
-				}
-
-				ui.separator();
-				
 				ui.label(format!("Generation: {}", self.gen_alg.generation_number()));
 
 				if centered_button(ui, vec2(150.0, 25.0), if self.running { "Pause" } else { "Evolve" }).clicked() {
@@ -92,15 +91,24 @@ impl Tab for EvolveTab {
 				
 
 				ui.separator();
+				ui.label("GA settings");
 
-				drag_label(ui, &mut self.gen_alg.generation_count, 2..=1000, 1.0, "Generation Count");
+				drag_label(ui, &mut self.gen_alg.generation_count, 2..=10000, 5.0, "Generation Count");
 				drag_label(ui, &mut self.gen_alg.survivors_count, 1..=(self.gen_alg.generation_count-1), 1.0, "Survivors Count");
-				drag_label(ui, &mut self.gen_alg.mutation_factor, 0.0..=1.0, 0.005, "Mutation Factor");
-				drag_label(ui, &mut self.gen_alg.params_mut().max_steps, 1..=500, 0.1, "Max Steps");
+				drag_label(ui, &mut self.gen_alg.tournament_size, 2..=(self.gen_alg.generation_count-1), 0.05, "Tournament Size");
+				drag_label(ui, &mut self.gen_alg.mutation_factor, 0.0..=1.0, 0.002, "Mutation Factor");
+				
+				ui.add_space(5.0);
+				ui.label("Fitness settings:");
+				drag_label(ui, &mut self.gen_alg.params_mut().same_weight, 0.0..=10.0, 0.01, "Equal Cells");
+				drag_label(ui, &mut self.gen_alg.params_mut().different_weight, -10.0..=0.0, 0.01, "Different Cells");
+				drag_label(ui, &mut self.gen_alg.params_mut().size_pow, 0.0..=10.0, 0.01, "Size Power");
+				drag_label(ui, &mut self.gen_alg.params_mut().size_weight, -10.0..=0.0, 0.01, "Size");
+				drag_label(ui, &mut self.gen_alg.params_mut().max_steps, 1..=500, 0.04, "Max Steps");
 
 				ui.separator();
 
-				drag_label(ui, &mut self.showing, 1..=self.gen_alg.agents().len(), 0.05, "Visible");
+				drag_label(ui, &mut self.showing, 1..=self.gen_alg.agents().len(), 0.3, "Visible");
 				drag_label(ui, &mut self.evolve_budget, 1..=1000, 0.2, "Evolve Budget");
 			});
 
@@ -109,6 +117,21 @@ impl Tab for EvolveTab {
 			.resizable(false)
 			.default_width(150.0)
 			.show(ctx, |ui| {
+
+				ui.label("target:");
+
+				let (target_rect, _) = ui.allocate_exact_size(vec2(140.0, 100.0), Sense::hover());
+				draw_grid_ui(ui, &self.gen_alg.params().goal, target_rect);
+
+				if centered_button(ui, vec2(150.0, 25.0), "Send to Edit").clicked() {
+					self.send_target = true;
+				}
+
+				ui.separator();
+				ui.separator();
+
+				ui.label("selected:");
+
 				let inspected = &self.gen_alg.agents()[self.selected];
 				let (agent_rect, _) = ui.allocate_exact_size(vec2(140.0, 100.0), Sense::hover());
 				draw_grid_ui(ui, inspected.0.0.state(), agent_rect);
@@ -116,7 +139,7 @@ impl Tab for EvolveTab {
 				ui.separator();
 
 				ui.label(format!("{}{} out of {}", self.selected + 1, number_suffix(self.selected + 1), self.gen_alg.agents().len()));
-				ui.label(format!("fitness: {:.3e}", inspected.1));
+				ui.label(format!("fitness: {:.2}", inspected.1));
 
 				ui.separator();
 
@@ -140,7 +163,7 @@ impl Tab for EvolveTab {
 				let mut cols = cols.round() as usize;
 
 				while cols * rows < self.showing {
-					if cols > rows {
+					if cols > rows || cols == 0 {
 						cols += 1;
 					}
 					else {

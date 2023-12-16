@@ -388,29 +388,30 @@ impl Grid {
 		self.shift
 	}
 
-	pub fn score_simmilarity(&self, other: &Self) -> f32 {
-		let mut score = 0.0;
+	pub fn score_simmilarity(&self, other: &Self) -> (u32, u32) {
+		let mut same = 0;
+		let mut different = 0;
 
 		for ([x, y], cell) in self {
 			let equal = cell.same_type(&other.at([x, y]));
 			let self_empty = cell.same_type(&Cell::Empty);
 			if equal && !self_empty {
-				score += 1.0;
+				same += 1;
 			}
 			else if !equal {
-				score -= 1.0;
+				different += 1;
 			}
 		}
 		for ([x, y], cell) in other {
 			if self.contains([x, y]) { continue; }
 
-			// we are outside self, so it is self.at([x, y]) is empty
+			// we are outside self, so self.at([x, y]) is empty
 			if !cell.same_type(&Cell::Empty) {
-				score -= 1.0;
+				different += 1;
 			}
 		}
 		
-		score
+		(same, different)
 	}
 
 
