@@ -38,10 +38,7 @@ async fn main() {
 
 
 /*
-smooth killing
 fitness optimizations
-fitness -> loss
-mutation factor
-fitness components weights
 fitness - discriminate cell details
+fitness components weights
 */

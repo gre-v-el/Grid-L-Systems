@@ -2,13 +2,14 @@ pub mod evolve;
 
 use evolve::Evolve;
 
-use rand::{seq::SliceRandom, rngs::ThreadRng, thread_rng};
+use rand::{seq::SliceRandom, rngs::ThreadRng, thread_rng, Rng};
 
 pub struct GeneticAlgorithm<T, U> where T: Evolve<U> {
 	rng: ThreadRng,
 	pub mutation_factor: f32,
 	pub generation_count: usize,
 	pub survivors_count: usize,
+	pub tournament_size: usize,
 	agents: Vec<(T, f32)>,
 	generation_number: u32,
 	params: U,
@@ -26,6 +27,7 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 			agents,
 			generation_number: 0,
 			params,
+			tournament_size: 5,
 		};
 
 		ret.calculate_fitnesses();
@@ -47,8 +49,34 @@ impl<T, U> GeneticAlgorithm<T, U> where T: Evolve<U> {
 		}
 	}
 
-	pub fn perform_generation(&mut self) {
+	fn select(&mut self) {
+		// in-place tournament selection
+
+		let mut tournament = Vec::with_capacity(self.tournament_size);
+		for i in 1..self.survivors_count {
+			tournament.clear();
+			for _ in 0..self.tournament_size {
+				tournament.push(self.rng.gen_range(i..self.agents.len()));
+			}
+
+			let mut max_index = 0;
+			let mut max_fitness = -f32::MAX;
+			for j in 0..self.tournament_size {
+				let contender = &self.agents[tournament[j]];
+				if contender.1 > max_fitness {
+					max_index = j;
+					max_fitness = contender.1;
+				}
+			}
+
+			self.agents.swap(i, tournament[max_index]);
+		}
+		
 		self.agents.truncate(self.survivors_count);
+	}
+
+	pub fn perform_generation(&mut self) {
+		self.select();
 		self.agents.iter_mut().for_each(|e| e.0.reset());
 		self.reproduce();
 		self.calculate_fitnesses();
