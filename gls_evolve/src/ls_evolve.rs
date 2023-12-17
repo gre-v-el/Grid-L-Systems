@@ -52,7 +52,7 @@ impl Evolve<EvolveParams> for LS {
         self.0.set_state(Grid::single(Cell::Stem(0, Direction::UP)));
     }
 
-    fn new_mutated(other: &Self, _factor: f32, rng: &mut ThreadRng) -> Self {
+    fn new_mutated(other: &Self, factor: f32, rng: &mut ThreadRng) -> Self {
 		let mut rules = Vec::from(other.0.rules());
 
 		let choice = rng.gen_range(0..=10);
@@ -97,6 +97,45 @@ impl Evolve<EvolveParams> for LS {
 			3 => {
 				let rule = rules.choose_mut(rng).unwrap();
 				rule.contract(Direction::random(rng));
+			}
+			// separate a rule
+			4 => {
+				let choice = rng.gen_range(0..rules.len());
+
+				let mut stem_count = 0;
+				for rule in &rules {
+					for cell in rule.contents() {
+						if let Cell::Stem(n, _) = cell {
+							if *n == choice as u8 {
+								stem_count += 1;
+							}
+						}
+					}
+				}
+
+				if stem_count > 1 {
+					stem_count = rng.gen_range(0..stem_count);
+				
+					let new_index = rules.len() as u8;
+					rules.push(rules[choice].clone());
+
+					'outer: 
+					for rule in &mut rules {
+						for cell in rule.contents_mut() {
+							if let Cell::Stem(n, _) = cell {
+								if *n == choice as u8 {
+									if stem_count == 0 {
+										*n = new_index;
+
+										break 'outer;
+									}
+
+									stem_count -= 1;
+								}
+							}
+						}
+					}
+				}
 			}
 			// mutate cells
 			_ => {

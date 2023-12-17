@@ -39,6 +39,4 @@ async fn main() {
 
 /*
 mutation factor
-mutate - separate stem cell (copy rule)
-visible_range & visible_count
 */

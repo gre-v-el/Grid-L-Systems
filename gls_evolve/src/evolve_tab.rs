@@ -27,7 +27,8 @@ pub struct EvolveParams {
 pub struct EvolveTab {
 	running: bool,
 	gen_alg: GeneticAlgorithm<LS, EvolveParams>,
-	showing: usize,
+	visible_count: usize,
+	visible_up_to: usize,
 	evolve_budget: u16,
 	selected: usize,
 
@@ -52,7 +53,8 @@ impl Tab for EvolveTab {
         Self {
 			gen_alg: GeneticAlgorithm::<LS, EvolveParams>::new(1000, 500, 0.5, params),
 			running: false,
-			showing: 16,
+			visible_count: 16,
+			visible_up_to: 1000,
 			evolve_budget: 50,
 			selected: 0,
 			send_selected: None,
@@ -108,7 +110,8 @@ impl Tab for EvolveTab {
 
 				ui.separator();
 
-				drag_label(ui, &mut self.showing, 1..=self.gen_alg.agents().len(), 0.3, "Visible");
+				drag_label(ui, &mut self.visible_count, 1..=self.visible_up_to, 0.3, "Visible");
+				drag_label(ui, &mut self.visible_up_to, self.visible_count..=self.gen_alg.agents().len(), 0.3, "Visible Range");
 				drag_label(ui, &mut self.evolve_budget, 1..=1000, 0.2, "Evolve Budget");
 			});
 
@@ -156,13 +159,13 @@ impl Tab for EvolveTab {
 				let available = ui.available_size();
 				let aspect = available.x / available.y;
 				
-				let rows = (self.showing as f32 / aspect).sqrt();
+				let rows = (self.visible_count as f32 / aspect).sqrt();
 				let cols = aspect * rows;
 
 				let mut rows = rows.round() as usize;
 				let mut cols = cols.round() as usize;
 
-				while cols * rows < self.showing {
+				while cols * rows < self.visible_count {
 					if cols > rows || cols == 0 {
 						cols += 1;
 					}
@@ -176,7 +179,7 @@ impl Tab for EvolveTab {
 					available.y / rows as f32,
 				);
 
-				for i in 0..self.showing {
+				for i in 0..self.visible_count {
 					let row = i / cols;
 					let col = i % cols;
 
@@ -187,7 +190,7 @@ impl Tab for EvolveTab {
 
 					let resp = ui.allocate_rect(rect, Sense::click());
 
-					let agent_index = (i as f32 / (self.showing - 1) as f32 * (self.gen_alg.agents().len() - 1) as f32) as usize;
+					let agent_index = (i as f32 / (self.visible_count - 1) as f32 * (self.visible_up_to-1).min(self.gen_alg.agents().len() - 1) as f32) as usize;
 					
 					let importance = if resp.hovered() {50} else {0} + if self.selected == agent_index {40} else {0};
 					let background = Color32::from_gray(importance);
