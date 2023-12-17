@@ -1,5 +1,6 @@
 pub mod cell;
 pub mod grid;
+pub mod ruleset;
 
 use std::collections::VecDeque;
 use grid::Grid;

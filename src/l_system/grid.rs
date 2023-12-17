@@ -1,6 +1,6 @@
 use std::fmt::{Display, Debug};
 
-use rand::rngs::ThreadRng;
+use rand::{rngs::ThreadRng, Rng};
 
 use crate::l_system::cell::{Cell, Direction};
 
@@ -13,6 +13,20 @@ pub struct Grid {
 }
 
 impl Grid {
+
+	pub fn random(rng: &mut ThreadRng, stem_types: u8) -> Grid {
+		let width = rng.gen_range(1..=4);
+		let height = rng.gen_range(1..=4);
+	
+		let mut contents = Vec::with_capacity((width * height) as usize);
+	
+		for _ in 0..(width*height) {
+			let cell = Cell::random(rng, stem_types);
+			contents.push(cell);
+		}
+	
+		Grid::new(width, height, contents, [rng.gen_range(0..width), rng.gen_range(0..height)])
+	}
 
 	pub fn from_string(string: &str, shift: [u32; 2]) -> Option<Grid> {
 		let mut width = 0;
