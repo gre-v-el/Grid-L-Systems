@@ -8,7 +8,7 @@ pub trait Ruleset {
 	fn expand_rule(&mut self, rng: &mut ThreadRng);
 	fn contract_rule(&mut self, rng: &mut ThreadRng);
 	fn separate_rule(&mut self, rng: &mut ThreadRng);
-	fn mutate_cells(&mut self, rng: &mut ThreadRng);
+	fn mutate_cells(&mut self, rng: &mut ThreadRng, factor: f64);
 	fn clear_dead_rules(&mut self);
 	fn contract_empty_borders(&mut self);
 }
@@ -95,11 +95,11 @@ impl Ruleset for Vec<Grid> {
 		}
 	}
 
-    fn mutate_cells(&mut self, rng: &mut ThreadRng) {
+    fn mutate_cells(&mut self, rng: &mut ThreadRng, factor: f64) {
 		let rules_len = self.len();
 		for rule in self.iter_mut() {
 			for cell in rule.contents_mut() {
-				if rng.gen_bool(0.1) {
+				if rng.gen_bool(factor) {
 					*cell = Cell::random(rng, rules_len as u8);
 				}
 			}

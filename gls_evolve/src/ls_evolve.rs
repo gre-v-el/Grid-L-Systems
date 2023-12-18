@@ -1,7 +1,6 @@
 use rand::Rng;
 use rand::rngs::ThreadRng;
 
-use rand::seq::SliceRandom;
 use soft_evolution::l_system::LSystem;
 use soft_evolution::genetic_algorithm::evolve::Evolve;
 use soft_evolution::l_system::cell::{Cell, Direction};
@@ -42,14 +41,14 @@ impl Evolve<EvolveParams> for LS {
     fn new_mutated(other: &Self, factor: f32, rng: &mut ThreadRng) -> Self {
 		let mut rules = Vec::from(other.0.rules());
 
-		let choice = rng.gen_range(0..=10);
-		match choice {
+		let choice = rng.gen_range(0.0..=20.0 - 14.8 * factor);
+		match choice as usize {
 			0 if rules.len() > 2 => rules.delete_rule(rng),
 			1 => rules.add_rule(rng),
 			2 => rules.expand_rule(rng),
 			3 => rules.contract_rule(rng),
 			4 => rules.separate_rule(rng),
-			_ => rules.mutate_cells(rng),
+			_ => rules.mutate_cells(rng, factor as f64 * 0.5 + 0.01),
 		}
 
 		rules.clear_dead_rules();

@@ -35,8 +35,3 @@ async fn main() {
 	}
 
 }
-
-
-/*
-mutation factor
-*/
