@@ -21,7 +21,7 @@ Grid LSystem is very simmilar to a normal LSystem, but instead of existing in a 
 ### Example 1: 
 Creating a GLS and growing it.
 
-`Editor`
+https://github.com/gre-v-el/Grid-L-Systems/raw/master/docs/imgs/flowers-editor.mp4
 
 `Growth`
 
