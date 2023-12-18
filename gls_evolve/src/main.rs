@@ -13,7 +13,7 @@ use egui_macroquad::macroquad::{self, prelude::*};
 
 use state::State;
 
-#[macroquad::main("Grid L-systems")]
+#[macroquad::main("GLS Evolver")]
 async fn main() {
 	env::set_var("RUST_BACKTRACE", "1");
 
