@@ -21,19 +21,18 @@ Grid LSystem is very simmilar to a normal LSystem, but instead of existing in a 
 ### Example 1: 
 Creating a GLS and growing it.
 
-https://github.com/gre-v-el/Grid-L-Systems/raw/master/docs/imgs/flowers-editor.mp4
+https://github.com/gre-v-el/Grid-L-Systems/assets/95856287/aa2d87e3-9df6-453d-87a9-b8c495899208
 
-`Growth`
+https://github.com/gre-v-el/Grid-L-Systems/assets/95856287/3095dad7-7d22-470b-b8db-07e691c0b68b
 
 ### Example 2:
 Creating a GLS goal, evolving a GLS that will achieve it and growing it.
 
-`Editor`
+https://github.com/gre-v-el/Grid-L-Systems/assets/95856287/b6e29b31-dbde-4f3c-8b09-847d0042da6b
 
-`Evolver`
+https://github.com/gre-v-el/Grid-L-Systems/assets/95856287/62497664-bdd7-46be-ac37-8ec9a73f073e
 
-`Growth`
-
+https://github.com/gre-v-el/Grid-L-Systems/assets/95856287/62e602ca-ad6b-423b-83b8-08948e089d8a
 
 ## Roadmap
 * [ ] `Project name`
