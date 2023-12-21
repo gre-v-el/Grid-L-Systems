@@ -21,10 +21,7 @@ async fn main() {
 		ctx.set_pixels_per_point(1.2);
 	});
 
-	
-
 	let mut state= State::new();
-
 
 	loop {
 		clear_background(BLACK);
