@@ -25,7 +25,6 @@ fn round_rect_to_pixel(ui: &Ui, rect: Rect) -> Rect {
 		min: pos2(floor_to_pixel(ui, rect.min.x), floor_to_pixel(ui, rect.min.y)),
 		max: pos2(ceil_to_pixel(ui, rect.max.x), ceil_to_pixel(ui, rect.max.y)),
 	}
-	//vec2(round_to_pixel(ui, vec.x), round_to_pixel(ui, vec.y))
 }
 
 fn floor_to_pixel(ui: &Ui, point: f32) -> f32 {

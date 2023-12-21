@@ -5,7 +5,7 @@ use crate::{controls::Controls, drawing::{draw_grid_lines, draw_grid, pixel_widt
 
 #[derive(PartialEq)]
 enum EditTool {
-	Draw, Erase // Rotate
+	Draw, Erase
 }
 
 #[derive(PartialEq, Eq)]

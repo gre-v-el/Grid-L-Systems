@@ -9,7 +9,7 @@ pub struct Grid {
 	contents: Vec<Cell>,
 	width: u32,
 	height: u32,
-	shift: [u32; 2], // -1 times the coordinates of the first cell. Alternatively (raw_x,raw_y) of (0,0)
+	shift: [u32; 2], // -1 times the coordinates of the origin cell. Alternatively (raw_x,raw_y) of (0,0)
 }
 
 impl Grid {
@@ -33,6 +33,7 @@ impl Grid {
 		let mut height = 0;
 		let mut contents = Vec::new();
 
+		// lines in txt files are y-positive down, Grid coordinate system is y-up, so go through lines in reverse
 		for line in string.lines().rev() {
 			let mut line_length = 0;
 			for ch in line.chars() {
@@ -44,6 +45,7 @@ impl Grid {
 			}
 
 			if width == 0 { width = line_length }
+			// if different lines are of different length, consider the file invalid
 			else if width != line_length {
 				return None;
 			}
@@ -59,7 +61,7 @@ impl Grid {
 		Self {
 			width,
 			height,
-			contents: contents,
+			contents,
 			shift,
 		}
 	}
